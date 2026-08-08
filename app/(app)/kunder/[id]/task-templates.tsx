@@ -1,17 +1,18 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import type { Frequency } from "@/generated/prisma/enums";
 import { frequencyOptions } from "@/lib/labels";
 import type { FormState } from "@/lib/validation";
-import { Field, SubmitButton, inputClass } from "@/components/form";
+import { Feedback, Field, SubmitButton, inputClass } from "@/components/form";
 import {
+  createTaskTemplate,
   deleteTaskTemplate,
   moveTaskTemplate,
   updateTaskTemplate,
 } from "@/app/actions/task-templates";
 
-export type TaskTemplateRowData = {
+export type TaskTemplateData = {
   id: string;
   title: string;
   frequency: Frequency;
@@ -20,12 +21,12 @@ export type TaskTemplateRowData = {
 const iconButtonClass =
   "rounded border border-black/25 px-2 py-2 text-sm hover:bg-black/5 disabled:opacity-40";
 
-export function TaskTemplateRow({
+function TaskTemplateRow({
   template,
   isFirst,
   isLast,
 }: {
-  template: TaskTemplateRowData;
+  template: TaskTemplateData;
   isFirst: boolean;
   isLast: boolean;
 }) {
@@ -35,9 +36,8 @@ export function TaskTemplateRow({
   );
 
   return (
-    // Flytteknappene ligger til venstre og Slett helt til høyre, med skillelinje.
-    // Slett skal ikke kunne treffes med et bomklikk ment for Lagre.
-    // Skjemaene er søsken, ikke nøstet — nøstede form-elementer er ugyldig HTML.
+    // Flytteknappene til venstre, Slett helt til høyre bak en skillelinje.
+    // Skjemaene er søsken — nøstede form-elementer er ugyldig HTML.
     <li className="flex items-end gap-2 border-b border-black/10 py-3">
       <div className="flex gap-1 pb-1">
         <form action={moveTaskTemplate.bind(null, template.id, "up")}>
@@ -50,7 +50,6 @@ export function TaskTemplateRow({
             ↑
           </button>
         </form>
-
         <form action={moveTaskTemplate.bind(null, template.id, "down")}>
           <button
             type="submit"
@@ -121,5 +120,83 @@ export function TaskTemplateRow({
         </button>
       </form>
     </li>
+  );
+}
+
+function NewTaskTemplateForm({ customerId }: { customerId: string }) {
+  const [state, formAction] = useActionState<FormState, FormData>(
+    createTaskTemplate.bind(null, customerId),
+    undefined,
+  );
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Tøm feltene så neste oppgave kan skrives rett inn
+  useEffect(() => {
+    if (state?.message) formRef.current?.reset();
+  }, [state]);
+
+  return (
+    <form ref={formRef} action={formAction} className="flex items-end gap-2">
+      <div className="flex-1">
+        <Field label="Tittel" htmlFor="new-title" errors={state?.errors?.title}>
+          <input id="new-title" name="title" required className={inputClass} />
+        </Field>
+      </div>
+
+      <div className="w-44">
+        <Field
+          label="Frekvens"
+          htmlFor="new-frequency"
+          errors={state?.errors?.frequency}
+        >
+          <select
+            id="new-frequency"
+            name="frequency"
+            defaultValue="WEEKLY"
+            className={inputClass}
+          >
+            {frequencyOptions.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      <SubmitButton pendingLabel="Legger til …">Legg til</SubmitButton>
+      <Feedback message={state?.message} />
+    </form>
+  );
+}
+
+export function TaskTemplates({
+  customerId,
+  templates,
+}: {
+  customerId: string;
+  templates: TaskTemplateData[];
+}) {
+  return (
+    <div className="flex max-w-4xl flex-col gap-4">
+      {templates.length === 0 ? (
+        <p className="text-sm text-neutral-600">
+          Ingen oppgavemaler er lagt inn på denne kunden ennå.
+        </p>
+      ) : (
+        <ul className="flex flex-col">
+          {templates.map((template, index) => (
+            <TaskTemplateRow
+              key={template.id}
+              template={template}
+              isFirst={index === 0}
+              isLast={index === templates.length - 1}
+            />
+          ))}
+        </ul>
+      )}
+
+      <NewTaskTemplateForm customerId={customerId} />
+    </div>
   );
 }

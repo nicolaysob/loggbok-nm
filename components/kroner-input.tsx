@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatKroner, parseKroner } from "@/lib/format";
+import { formatKroner, parseDecimal } from "@/lib/format";
 import { inputClass } from "@/components/form";
 
 // Viser tusenskille når feltet mister fokus, og rått tall mens du skriver.
@@ -28,11 +28,11 @@ export function KronerInput({
       value={value}
       onChange={(event) => setValue(event.target.value)}
       onFocus={() => {
-        const parsed = parseKroner(value);
+        const parsed = parseDecimal(value);
         setValue(parsed === null ? "" : String(parsed));
       }}
       onBlur={() => {
-        const parsed = parseKroner(value);
+        const parsed = parseDecimal(value);
         if (parsed !== null) setValue(formatKroner(parsed));
       }}
       className={inputClass}

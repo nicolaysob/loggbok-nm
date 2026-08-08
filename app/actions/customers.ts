@@ -31,7 +31,14 @@ export async function createCustomer(
     return { errors: z.flattenError(result.error).fieldErrors };
   }
 
-  const customer = await db.customer.create({ data: result.data });
+  // Hver kunde får ett standardområde med samme navn. Da slipper man å tenke på
+  // områder i det hele tatt før en kunde faktisk må deles opp i flere anlegg.
+  const customer = await db.customer.create({
+    data: {
+      ...result.data,
+      areas: { create: { name: result.data.name } },
+    },
+  });
 
   revalidatePath("/kunder");
   redirect(`/kunder/${customer.id}`);

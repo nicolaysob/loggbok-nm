@@ -23,10 +23,12 @@ enum Frequency {
   AS_NEEDED
 }
 
-// Logginnføring er enten arbeidslogg eller kommentarbok
+// De tre registreringstypene på et kundekort.
+// EXTRA_WORK er det eneste som er fakturerbart, og det eneste som har timer.
 enum LogType {
-  WORK_LOG
-  COMMENT_BOOK
+  VISIT_NOTE
+  TASK_COMPLETION
+  EXTRA_WORK
 }
 
 // Avviksstatus: åpen, under arbeid, lukket

@@ -1,4 +1,4 @@
-import { ContractType, Frequency } from "@/generated/prisma/enums";
+import { ContractType, Frequency, LogType } from "@/generated/prisma/enums";
 
 export const contractTypeLabels: Record<ContractType, string> = {
   YEAR_ROUND: "Helår",
@@ -13,6 +13,20 @@ export const frequencyLabels: Record<Frequency, string> = {
   MONTHLY: "Månedlig",
   AS_NEEDED: "Ved behov",
 };
+
+export const logTypeLabels: Record<LogType, string> = {
+  VISIT_NOTE: "Besøk",
+  TASK_COMPLETION: "Oppgaver",
+  EXTRA_WORK: "Ekstraarbeid",
+};
+
+// Frekvensene i den rekkefølgen de skal grupperes på oppgavesiden
+export const frequencyOrder: Frequency[] = [
+  "DAILY",
+  "WEEKLY",
+  "MONTHLY",
+  "AS_NEEDED",
+];
 
 export const contractTypeOptions = Object.entries(contractTypeLabels) as [
   ContractType,

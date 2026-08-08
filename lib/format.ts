@@ -16,6 +16,16 @@ export function formatKroner(value: number): string {
     : partialKroner.format(value);
 }
 
+const hoursFormat = new Intl.NumberFormat("nb-NO", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
+
+// 2,5 med komma — ikke 2.5
+export function formatHours(value: number): string {
+  return hoursFormat.format(value);
+}
+
 // Prisma gir Decimal-objekter. De kan ikke sendes til klientkomponenter,
 // så de må gjøres om til tall før de forlater serveren.
 export function decimalToNumber(value: { toString(): string }): number {
@@ -25,7 +35,7 @@ export function decimalToNumber(value: { toString(): string }): number {
 // Godtar «150 000», «150000,50» og «150000.50».
 // \s dekker også det harde mellomrommet Intl bruker som tusenskille.
 // Returnerer null når feltet er tomt eller ikke lar seg tolke — zod tar feilmeldingen.
-export function parseKroner(input: string): number | null {
+export function parseDecimal(input: string): number | null {
   const cleaned = input.replace(/\s/g, "").replace(",", ".");
   if (cleaned === "") return null;
 

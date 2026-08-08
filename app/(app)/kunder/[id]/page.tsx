@@ -4,11 +4,10 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
 import { decimalToNumber } from "@/lib/format";
 import { updateCustomer } from "@/app/actions/customers";
-import { createArea } from "@/app/actions/areas";
-import { AreaForm, emptyArea } from "@/components/area-form";
 import { CustomerForm } from "../customer-form";
+import { TaskTemplates } from "./task-templates";
 
-export default async function CustomerPage({
+export default async function CustomerAdminPage({
   params,
 }: PageProps<"/kunder/[id]">) {
   await requireAdmin();
@@ -16,7 +15,19 @@ export default async function CustomerPage({
 
   const customer = await db.customer.findUnique({
     where: { id },
-    include: { areas: { orderBy: { name: "asc" } } },
+    include: {
+      // Standardområdet er skjult for brukerne, men oppgavemalene ligger der
+      areas: {
+        orderBy: { createdAt: "asc" },
+        take: 1,
+        select: {
+          taskTemplates: {
+            orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+            select: { id: true, title: true, frequency: true },
+          },
+        },
+      },
+    },
   });
 
   if (!customer) notFound();
@@ -49,41 +60,10 @@ export default async function CustomerPage({
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-bold">Områder</h2>
-
-        {customer.areas.length === 0 ? (
-          <p className="text-sm text-neutral-600">
-            Ingen områder er lagt inn på denne kunden ennå.
-          </p>
-        ) : (
-          <ul className="flex max-w-2xl flex-col gap-2">
-            {customer.areas.map((area) => (
-              <li
-                key={area.id}
-                className="flex items-baseline justify-between border-b border-black/10 pb-2"
-              >
-                <Link
-                  href={`/omrader/${area.id}`}
-                  className="text-sm font-medium underline underline-offset-2"
-                >
-                  {area.name}
-                </Link>
-                <span className="text-sm text-neutral-600">
-                  {area.address ?? ""}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-bold">Nytt område</h2>
-        <AreaForm
-          action={createArea.bind(null, customer.id)}
-          values={emptyArea}
-          submitLabel="Legg til område"
-          resetOnSuccess
+        <h2 className="text-xl font-bold">Oppgavemaler</h2>
+        <TaskTemplates
+          customerId={customer.id}
+          templates={customer.areas[0]?.taskTemplates ?? []}
         />
       </section>
     </div>

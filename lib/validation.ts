@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ContractType, Frequency } from "@/generated/prisma/enums";
-import { parseKroner } from "@/lib/format";
+import { parseDecimal } from "@/lib/format";
 
 // Tomme tekstfelt skal lagres som null, ikke som tom streng
 const optionalText = z
@@ -19,7 +19,7 @@ export const customerSchema = z.object({
   address: optionalText,
   contractType: z.enum(ContractType, { error: "Velg kontraktstype" }),
   annualValue: z.preprocess(
-    (value) => parseKroner(String(value ?? "")),
+    (value) => parseDecimal(String(value ?? "")),
     z
       .number({ error: "Kontraktssum må fylles ut som et tall" })
       .min(0, { error: "Kontraktssum kan ikke være negativ" })
@@ -33,6 +33,28 @@ export const areaSchema = z.object({
   name: z.string().trim().min(1, { error: "Navn må fylles ut" }),
   address: optionalText,
   notes: optionalText,
+});
+
+// Besøksnotat: bare fritekst, ingen timer og ingen oppgaver
+export const visitNoteSchema = z.object({
+  comment: z.string().trim().min(1, { error: "Skriv et notat om besøket" }),
+});
+
+// Ekstraarbeid er fakturerbart, så både timer og beskrivelse er påkrevd —
+// en faktura­linje uten forklaring er ubrukelig i ettertid.
+// 0,5 er minste registrerbare, 24 er en åpenbar øvre grense per innføring.
+export const extraWorkSchema = z.object({
+  hours: z.preprocess(
+    (value) => parseDecimal(String(value ?? "")),
+    z
+      .number({ error: "Fyll inn antall timer" })
+      .min(0.5, { error: "Ekstraarbeid må være minst 0,5 time" })
+      .max(24, { error: "En registrering kan ikke være over 24 timer" }),
+  ),
+  comment: z
+    .string()
+    .trim()
+    .min(1, { error: "Beskriv hva som ble gjort" }),
 });
 
 export const taskTemplateSchema = z.object({
