@@ -90,6 +90,12 @@ export default async function CustomerPage({
         >
           Timeregistrering
         </Link>
+        <Link
+          href={`/kunde/${customer.id}/avvik`}
+          className={`${actionButtonClass} bg-white text-neutral-950 active:bg-neutral-100`}
+        >
+          Meld avvik
+        </Link>
       </div>
 
       <section className="flex flex-col gap-2">

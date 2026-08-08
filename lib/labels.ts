@@ -1,4 +1,9 @@
-import { ContractType, Frequency, LogType } from "@/generated/prisma/enums";
+import {
+  ContractType,
+  Frequency,
+  IssueStatus,
+  LogType,
+} from "@/generated/prisma/enums";
 
 export const contractTypeLabels: Record<ContractType, string> = {
   YEAR_ROUND: "Helår",
@@ -19,6 +24,19 @@ export const logTypeLabels: Record<LogType, string> = {
   TASK_COMPLETION: "Oppgaver",
   EXTRA_WORK: "Ekstraarbeid",
 };
+
+export const issueStatusLabels: Record<IssueStatus, string> = {
+  OPEN: "Åpen",
+  IN_PROGRESS: "Under arbeid",
+  CLOSED: "Lukket",
+};
+
+// Åpne avvik skal ligge øverst, lukkede nederst
+export const issueStatusOrder: IssueStatus[] = [
+  "OPEN",
+  "IN_PROGRESS",
+  "CLOSED",
+];
 
 // Frekvensene i den rekkefølgen de skal grupperes på oppgavesiden
 export const frequencyOrder: Frequency[] = [

@@ -57,6 +57,14 @@ export const extraWorkSchema = z.object({
     .min(1, { error: "Beskriv hva som ble gjort" }),
 });
 
+// Avvik har ingen timer — ekstraarbeid registreres som EXTRA_WORK
+export const issueSchema = z.object({
+  description: z
+    .string()
+    .trim()
+    .min(1, { error: "Beskriv avviket" }),
+});
+
 export const taskTemplateSchema = z.object({
   title: z.string().trim().min(1, { error: "Tittel må fylles ut" }),
   frequency: z.enum(Frequency, { error: "Velg frekvens" }),
