@@ -155,10 +155,13 @@ model Photo {
 model Issue {
   id          String      @id @default(cuid())
   areaId      String
+  // Hvem som meldte avviket
+  userId      String
   description String
   status      IssueStatus @default(OPEN)
 
   area   Area    @relation(fields: [areaId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
   photos Photo[]
 
   createdAt DateTime  @default(now())
@@ -166,6 +169,7 @@ model Issue {
   updatedAt DateTime  @updatedAt
 
   @@index([areaId, status])
+  @@index([userId])
 }
 
 model User {
@@ -176,6 +180,7 @@ model User {
   role         Role   @default(EMPLOYEE)
 
   logEntries LogEntry[]
+  issues     Issue[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -9,6 +9,7 @@ export type IssueItem = {
   description: string;
   status: IssueStatus;
   created: string;
+  reportedBy: string;
 };
 
 const badgeClasses: Record<IssueStatus, string> = {
@@ -33,7 +34,9 @@ export function IssueList({ issues }: { issues: IssueItem[] }) {
             >
               {issueStatusLabels[issue.status]}
             </span>
-            <span className="text-sm text-neutral-700">{issue.created}</span>
+            <span className="text-sm text-neutral-700">
+              {issue.created} · {issue.reportedBy}
+            </span>
           </div>
 
           <p className="text-base text-neutral-950">{issue.description}</p>

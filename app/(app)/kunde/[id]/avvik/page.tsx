@@ -23,7 +23,13 @@ export default async function IssuesPage({
   const issues = await db.issue.findMany({
     where: { area: { customerId: id } },
     orderBy: { createdAt: "desc" },
-    select: { id: true, description: true, status: true, createdAt: true },
+    select: {
+      id: true,
+      description: true,
+      status: true,
+      createdAt: true,
+      user: { select: { name: true } },
+    },
   });
 
   // Åpne først, lukkede nederst. Innenfor hver status nyeste først,
@@ -39,6 +45,7 @@ export default async function IssuesPage({
       description: issue.description,
       status: issue.status,
       created: formatDate(issue.createdAt),
+      reportedBy: issue.user.name,
     }));
 
   return (

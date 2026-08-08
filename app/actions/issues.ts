@@ -14,7 +14,7 @@ export async function createIssue(
   _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireUser();
+  const user = await requireUser();
 
   const result = issueSchema.safeParse({
     description: formData.get("description"),
@@ -29,9 +29,15 @@ export async function createIssue(
   }
 
   await db.issue.create({
-    data: { areaId, description: result.data.description, status: "OPEN" },
+    data: {
+      areaId,
+      userId: user.id,
+      description: result.data.description,
+      status: "OPEN",
+    },
   });
 
+  revalidatePath(`/kunde/${customerId}`);
   revalidatePath(`/kunde/${customerId}/avvik`);
   redirect(`/kunde/${customerId}?lagret=1`);
 }
@@ -49,5 +55,6 @@ export async function setIssueStatus(issueId: string, status: IssueStatus) {
     select: { area: { select: { customerId: true } } },
   });
 
+  revalidatePath(`/kunde/${issue.area.customerId}`);
   revalidatePath(`/kunde/${issue.area.customerId}/avvik`);
 }
