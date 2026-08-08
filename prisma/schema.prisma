@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Kontraktstype: helår, sommer, vinter, renhold
+enum ContractType {
+  YEAR_ROUND
+  SUMMER
+  WINTER
+  CLEANING
+}
+
+// Frekvens på oppgavemal: daglig, ukentlig, månedlig, ved behov
+enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  AS_NEEDED
+}
+
+// Logginnføring er enten arbeidslogg eller kommentarbok
+enum LogType {
+  WORK_LOG
+  COMMENT_BOOK
+}
+
+// Avviksstatus: åpen, under arbeid, lukket
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+// Kunde
+model Customer {
+  id            String       @id @default(cuid())
+  name          String
+  contactPerson String?
+  email         String?
+  phone         String?
+  address       String?
+  contractType  ContractType
+  // Årlig kontraktssum i kroner
+  annualValue   Decimal      @db.Decimal(10, 2)
+  active        Boolean      @default(true)
+
+  areas Area[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Område — en kunde kan ha flere
+model Area {
+  id         String @id @default(cuid())
+  customerId String
+  name       String
+  address    String?
+  notes      String?
+
+  customer      Customer       @relation(fields: [customerId], references: [id])
+  taskTemplates TaskTemplate[]
+  logEntries    LogEntry[]
+  issues        Issue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+}
+
+// Oppgavemal — faste oppgaver knyttet til et område
+model TaskTemplate {
+  id        String    @id @default(cuid())
+  areaId    String
+  title     String
+  frequency Frequency
+  // Rekkefølge i lista ute på anlegget
+  sortOrder Int       @default(0)
+
+  area           Area            @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  completedTasks CompletedTask[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([areaId])
+}
+
+// Logginnføring — arbeidslogg eller kommentarbok
+model LogEntry {
+  id         String   @id @default(cuid())
+  areaId     String
+  userId     String
+  occurredAt DateTime
+  type       LogType
+  comment    String?
+  // Timer som desimal, f.eks. 2.5
+  hours      Decimal? @db.Decimal(5, 2)
+
+  area           Area            @relation(fields: [areaId], references: [id])
+  user           User            @relation(fields: [userId], references: [id])
+  completedTasks CompletedTask[]
+  photos         Photo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([areaId, occurredAt])
+  @@index([userId])
+}
+
+// Kobling mellom logginnføring og oppgavemal
+model CompletedTask {
+  id             String @id @default(cuid())
+  logEntryId     String
+  taskTemplateId String
+
+  logEntry     LogEntry     @relation(fields: [logEntryId], references: [id], onDelete: Cascade)
+  taskTemplate TaskTemplate @relation(fields: [taskTemplateId], references: [id], onDelete: Cascade)
+
+  // Samme oppgave skal ikke kunne krysses av to ganger i én innføring
+  @@unique([logEntryId, taskTemplateId])
+  @@index([taskTemplateId])
+}
+
+// Bilde — henger på enten en logginnføring eller et avvik, aldri begge
+model Photo {
+  id         String   @id @default(cuid())
+  logEntryId String?
+  issueId    String?
+  url        String
+  uploadedAt DateTime @default(now())
+
+  logEntry LogEntry? @relation(fields: [logEntryId], references: [id], onDelete: Cascade)
+  issue    Issue?    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([logEntryId])
+  @@index([issueId])
+}
+
+// Avvik på et område
+model Issue {
+  id          String      @id @default(cuid())
+  areaId      String
+  description String
+  status      IssueStatus @default(OPEN)
+
+  area   Area    @relation(fields: [areaId], references: [id])
+  photos Photo[]
+
+  createdAt DateTime  @default(now())
+  closedAt  DateTime?
+  updatedAt DateTime  @updatedAt
+
+  @@index([areaId, status])
+}
+
+model User {
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
+  passwordHash String
+  role         Role   @default(EMPLOYEE)
+
+  logEntries LogEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

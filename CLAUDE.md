@@ -10,4 +10,8 @@ Regler:
 - Ikke bygg funksjonalitet jeg ikke har bedt om. Foreslå gjerne, men ikke implementer på eget initiativ.
 - Ett steg om gangen. Vis meg planen før du skriver mange filer.
 
+Datamodell — regler som ikke kan uttrykkes i Prisma-schemaet:
+- `LogEntry.hours` er nullable i databasen, men arbeidslogg (`WORK_LOG`) krever timer. Dette håndheves i applikasjonslaget. Kommentarbok (`COMMENT_BOOK`) kan ha `hours = null`.
+- Bruk alltid `prisma migrate`, aldri `prisma db push`. CHECK-constrainten som sikrer at et `Photo` henger på nøyaktig én forelder (`logEntryId` eller `issueId`) finnes bare i migrasjonsfilene, ikke i schemaet. `db push` synker direkte fra schemaet og vil stille droppe den.
+
 @AGENTS.md
