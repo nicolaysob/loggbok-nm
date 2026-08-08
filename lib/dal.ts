@@ -26,3 +26,11 @@ export const requireUser = cache(async () => {
   if (!user) redirect("/login");
   return user;
 });
+
+// Administrasjonssidene. Ansatte sendes stille til forsiden — proxy.ts sjekker
+// bare om man er innlogget, ikke hvilken rolle man har.
+export const requireAdmin = cache(async () => {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") redirect("/");
+  return user;
+});
