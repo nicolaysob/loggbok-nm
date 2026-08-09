@@ -2,9 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 
-export const inputClass =
-  "w-full rounded border border-black/25 bg-white px-3 py-2 text-sm text-neutral-900 " +
-  "outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900";
+export { inputClass, adminBackLinkClass as backLinkClass } from "@/lib/ui";
 
 export function Field({
   label,
@@ -19,12 +17,12 @@ export function Field({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={htmlFor} className="text-sm font-medium">
+      <label htmlFor={htmlFor} className="text-meta font-semibold text-navy-900">
         {label}
       </label>
       {children}
       {errors?.map((error) => (
-        <p key={error} role="alert" className="text-sm text-red-700">
+        <p key={error} role="alert" className="text-meta font-semibold text-red-700">
           {error}
         </p>
       ))}
@@ -32,12 +30,21 @@ export function Field({
   );
 }
 
+// Fylt er reservert sidens ene primærhandling. Alt annet er outline.
+const submitVariants = {
+  solid: "bg-brand text-white hover:bg-brand-dark",
+  outline:
+    "border border-line bg-white text-navy-900 shadow-soft hover:bg-navy-50",
+} as const;
+
 export function SubmitButton({
   children,
   pendingLabel = "Lagrer …",
+  variant = "solid",
 }: {
   children: React.ReactNode;
   pendingLabel?: string;
+  variant?: keyof typeof submitVariants;
 }) {
   const { pending } = useFormStatus();
 
@@ -45,8 +52,7 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={pending}
-      className="rounded bg-neutral-900 px-4 py-2 text-sm font-semibold text-white
-                 hover:bg-neutral-700 disabled:opacity-60"
+      className={`rounded-xl px-4 py-2 text-meta font-semibold disabled:opacity-60 ${submitVariants[variant]}`}
     >
       {pending ? pendingLabel : children}
     </button>
@@ -57,7 +63,7 @@ export function Feedback({ message }: { message?: string }) {
   if (!message) return null;
 
   return (
-    <p role="status" className="text-sm font-medium text-green-700">
+    <p role="status" className="text-meta font-semibold text-green-700">
       {message}
     </p>
   );

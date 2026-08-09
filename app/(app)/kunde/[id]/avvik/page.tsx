@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { issueStatusOrder } from "@/lib/labels";
 import { formatDate } from "@/lib/time";
+import { backLinkClass } from "@/lib/ui";
 import { IssueForm } from "./issue-form";
 import { IssueList, type IssueItem } from "./issue-list";
 
@@ -29,6 +30,7 @@ export default async function IssuesPage({
       status: true,
       createdAt: true,
       user: { select: { name: true } },
+      photos: { select: { url: true }, take: 3 },
     },
   });
 
@@ -46,25 +48,23 @@ export default async function IssuesPage({
       status: issue.status,
       created: formatDate(issue.createdAt),
       reportedBy: issue.user.name,
+      photoUrls: issue.photos.map((photo) => photo.url),
     }));
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <Link
-          href={`/kunde/${customer.id}`}
-          className="inline-flex min-h-12 items-center text-base underline underline-offset-2"
-        >
+      <div className="flex flex-col gap-2">
+        <Link href={`/kunde/${customer.id}`} className={backLinkClass}>
           ← {customer.name}
         </Link>
-        <h1 className="text-2xl font-bold">Meld avvik</h1>
+        <h1 className="text-display tracking-tight">Meld avvik</h1>
       </div>
 
       <IssueForm customerId={customer.id} />
 
       {sorted.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-base font-semibold text-neutral-700">
+          <h2 className="text-heading">
             Registrerte avvik
           </h2>
           <IssueList issues={sorted} />

@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
 import { frequencyOrder } from "@/lib/labels";
 import { formatDate } from "@/lib/time";
+import { backLinkClass } from "@/lib/ui";
 import { TasksForm, type TaskGroup } from "./tasks-form";
 
 export default async function TasksPage({
@@ -71,18 +72,15 @@ export default async function TasksPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <Link
-          href={`/kunde/${customer.id}`}
-          className="inline-flex min-h-12 items-center text-base underline underline-offset-2"
-        >
+      <div className="flex flex-col gap-2">
+        <Link href={`/kunde/${customer.id}`} className={backLinkClass}>
           ← {customer.name}
         </Link>
-        <h1 className="text-2xl font-bold">Oppgaver</h1>
+        <h1 className="text-display tracking-tight">Oppgaver</h1>
       </div>
 
       {groups.length === 0 ? (
-        <p className="text-base">
+        <p className="text-body">
           Ingen oppgaver er satt opp for denne kunden ennå.
         </p>
       ) : (

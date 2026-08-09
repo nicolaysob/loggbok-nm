@@ -5,26 +5,11 @@ import { formatHours } from "@/lib/format";
 import type { FormState } from "@/lib/validation";
 import { createExtraWork } from "@/app/actions/log-entries";
 import {
+  FieldError,
   HoursStepper,
   StickySubmit,
-  textareaClass,
 } from "@/components/mobile-form";
-
-function Errors({ messages }: { messages?: string[] }) {
-  return (
-    <>
-      {messages?.map((message) => (
-        <p
-          key={message}
-          role="alert"
-          className="text-base font-medium text-red-800"
-        >
-          {message}
-        </p>
-      ))}
-    </>
-  );
-}
+import { labelClass, noticeClass, textareaClass } from "@/lib/ui";
 
 export function HoursForm({ customerId }: { customerId: string }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
@@ -34,23 +19,20 @@ export function HoursForm({ customerId }: { customerId: string }) {
   const [hours, setHours] = useState(0);
 
   return (
-    <form action={formAction} className="flex flex-col gap-6 pb-4">
-      <p className="rounded-xl border-2 border-amber-700 bg-amber-50 px-4 py-3 text-base text-amber-900">
+    <form action={formAction} className="flex flex-col gap-8 pb-4">
+      <p className={noticeClass}>
         Kun for arbeid utover kontrakten. Disse timene faktureres.
       </p>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-base font-semibold text-neutral-700">Timer</h2>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-heading">Timer</h2>
         <HoursStepper hours={hours} onChange={setHours} format={formatHours} />
         <input type="hidden" name="hours" value={hours} />
-        <Errors messages={state?.errors?.hours} />
+        <FieldError messages={state?.errors?.hours} />
       </section>
 
-      <section className="flex flex-col gap-2">
-        <label
-          htmlFor="comment"
-          className="text-base font-semibold text-neutral-700"
-        >
+      <section className="flex flex-col gap-3">
+        <label htmlFor="comment" className={labelClass}>
           Hva ble gjort?
         </label>
         <textarea
@@ -59,14 +41,10 @@ export function HoursForm({ customerId }: { customerId: string }) {
           rows={5}
           className={textareaClass}
         />
-        <Errors messages={state?.errors?.comment} />
+        <FieldError messages={state?.errors?.comment} />
       </section>
 
-      {state?.message && (
-        <p role="alert" className="text-base font-medium text-red-800">
-          {state.message}
-        </p>
-      )}
+      <FieldError messages={state?.message ? [state.message] : undefined} />
 
       <StickySubmit pending={pending}>Lagre ekstraarbeid</StickySubmit>
     </form>

@@ -6,37 +6,96 @@ import { PrismaClient } from "../generated/prisma/client";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
-// Minimal seed: kun de to brukerne som trengs for å logge inn.
-// Kunder, områder og oppgavemaler legges inn gjennom grensesnittet.
 const users = [
   {
+    username: "nicolay",
     name: "Nicolay",
-    email: "admin@loggbok.no",
-    password: "admin-dev-2026",
+    password: "3467",
     role: "ADMIN" as const,
+    legacyUsernames: ["admin"],
+    legacyEmails: ["admin@loggbok.no"],
   },
   {
-    name: "Ansatt",
-    email: "ansatt@loggbok.no",
-    password: "ansatt-dev-2026",
+    username: "magnus",
+    name: "Magnus",
+    password: "4639",
     role: "EMPLOYEE" as const,
+    legacyUsernames: ["ansatt"],
+    legacyEmails: ["ansatt@loggbok.no"],
+  },
+  {
+    username: "aleksandrs",
+    name: "Aleksandrs",
+    password: "5773",
+    role: "EMPLOYEE" as const,
+    legacyUsernames: [] as string[],
+    legacyEmails: [] as string[],
+  },
+  {
+    username: "victor",
+    name: "Victor",
+    password: "4342",
+    role: "EMPLOYEE" as const,
+    legacyUsernames: [] as string[],
+    legacyEmails: [] as string[],
   },
 ];
 
 async function main() {
   for (const user of users) {
-    await prisma.user.upsert({
-      where: { email: user.email },
-      update: {},
-      create: {
-        name: user.name,
-        email: user.email,
-        passwordHash: await hash(user.password, 10),
-        role: user.role,
-      },
-    });
-    console.log(`Klar ${user.role}: ${user.email}`);
+    const passwordHash = await hash(user.password, 10);
+
+    const existing =
+      (await prisma.user.findUnique({ where: { username: user.username } })) ??
+      (await prisma.user.findFirst({
+        where: {
+          OR: [
+            { username: { in: user.legacyUsernames } },
+            { email: { in: user.legacyEmails } },
+          ],
+        },
+      }));
+
+    if (existing) {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          username: user.username,
+          name: user.name,
+          passwordHash,
+          role: user.role,
+          email: null,
+        },
+      });
+    } else {
+      await prisma.user.create({
+        data: {
+          username: user.username,
+          name: user.name,
+          passwordHash,
+          role: user.role,
+        },
+      });
+    }
+
+    console.log(`Klar ${user.role}: ${user.username}`);
   }
+
+  const jobTypes = [
+    "Plenklipp",
+    "Snømåking",
+    "Renhold",
+    "Maling",
+    "Portkontroll",
+  ];
+  for (const [index, name] of jobTypes.entries()) {
+    await prisma.jobType.upsert({
+      where: { name },
+      update: {},
+      create: { name, sortOrder: index + 1 },
+    });
+  }
+  console.log(`Klar ${jobTypes.length} oppdragstyper`);
 }
 
 main()

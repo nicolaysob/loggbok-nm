@@ -133,7 +133,7 @@ export function CustomerForm({
         </Field>
       </div>
 
-      <label className="flex items-center gap-2 text-sm font-medium">
+      <label className="flex items-center gap-2 text-meta font-medium">
         <input
           type="checkbox"
           name="active"

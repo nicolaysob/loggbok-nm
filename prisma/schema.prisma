@@ -43,6 +43,14 @@ enum Role {
   EMPLOYEE
 }
 
+// Hvordan et kundeoppdrag gjentas i kalenderen
+enum JobScheduleKind {
+  ONCE
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
 // Kunde
 model Customer {
   id            String       @id @default(cuid())
@@ -70,10 +78,11 @@ model Area {
   address    String?
   notes      String?
 
-  customer      Customer       @relation(fields: [customerId], references: [id])
+  customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
   taskTemplates TaskTemplate[]
   logEntries    LogEntry[]
   issues        Issue[]
+  customerJobs  CustomerJob[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -110,7 +119,7 @@ model LogEntry {
   // Timer som desimal, f.eks. 2.5
   hours      Decimal? @db.Decimal(5, 2)
 
-  area           Area            @relation(fields: [areaId], references: [id])
+  area           Area            @relation(fields: [areaId], references: [id], onDelete: Cascade)
   user           User            @relation(fields: [userId], references: [id])
   completedTasks CompletedTask[]
   photos         Photo[]
@@ -160,7 +169,7 @@ model Issue {
   description String
   status      IssueStatus @default(OPEN)
 
-  area   Area    @relation(fields: [areaId], references: [id])
+  area   Area    @relation(fields: [areaId], references: [id], onDelete: Cascade)
   user   User    @relation(fields: [userId], references: [id])
   photos Photo[]
 
@@ -174,14 +183,71 @@ model Issue {
 
 model User {
   id           String @id @default(cuid())
+  username     String @unique
   name         String
-  email        String @unique
+  email        String? @unique
   passwordHash String
   role         Role   @default(EMPLOYEE)
 
-  logEntries LogEntry[]
-  issues     Issue[]
+  logEntries     LogEntry[]
+  issues         Issue[]
+  jobCompletions JobCompletion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Felles oppdragstyper i rullgardinen (plenklipp, maling, …)
+model JobType {
+  id        String @id @default(cuid())
+  name      String @unique
+  sortOrder Int    @default(0)
+
+  jobs CustomerJob[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Oppdrag bestilt på en kunde — det som dukker opp i kalenderen
+model CustomerJob {
+  id        String          @id @default(cuid())
+  areaId    String
+  jobTypeId String
+  kind      JobScheduleKind
+  // Engangsoppdrag: hvilken dag det skal gjøres
+  dueOn     DateTime?
+  // Ukentlig/annenhver uke: 0 = mandag … 6 = søndag
+  weekday   Int?
+  // Ankerdato for gjentakelse (og månedens dag for MONTHLY)
+  startsOn  DateTime
+  active    Boolean         @default(true)
+  notes     String?
+
+  area         Area             @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  jobType      JobType          @relation(fields: [jobTypeId], references: [id], onDelete: Restrict)
+  completions  JobCompletion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([areaId, active])
+  @@index([jobTypeId])
+}
+
+// Ett kryss i kalenderen for én planlagt dag
+model JobCompletion {
+  id            String   @id @default(cuid())
+  customerJobId String
+  userId        String
+  // Kalenderdagen som ble krysset av (midnatt Oslo lagret som UTC-instant)
+  scheduledFor  DateTime
+  completedAt   DateTime @default(now())
+
+  customerJob CustomerJob @relation(fields: [customerJobId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@unique([customerJobId, scheduledFor])
+  @@index([scheduledFor])
+  @@index([userId])
 }

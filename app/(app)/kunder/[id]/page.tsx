@@ -3,8 +3,12 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
 import { decimalToNumber } from "@/lib/format";
+import { formatDate } from "@/lib/time";
 import { updateCustomer } from "@/app/actions/customers";
+import { adminBackLinkClass as backLinkClass } from "@/lib/ui";
 import { CustomerForm } from "../customer-form";
+import { CustomerJobs } from "./customer-jobs";
+import { DeleteCustomerButton } from "./delete-customer-button";
 import { TaskTemplates } from "./task-templates";
 
 export default async function CustomerAdminPage({
@@ -13,33 +17,53 @@ export default async function CustomerAdminPage({
   await requireAdmin();
   const { id } = await params;
 
-  const customer = await db.customer.findUnique({
-    where: { id },
-    include: {
-      // Standardområdet er skjult for brukerne, men oppgavemalene ligger der
-      areas: {
-        orderBy: { createdAt: "asc" },
-        take: 1,
-        select: {
-          taskTemplates: {
-            orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-            select: { id: true, title: true, frequency: true },
+  const [customer, jobTypes] = await Promise.all([
+    db.customer.findUnique({
+      where: { id },
+      include: {
+        areas: {
+          orderBy: { createdAt: "asc" },
+          take: 1,
+          select: {
+            taskTemplates: {
+              orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+              select: { id: true, title: true, frequency: true },
+            },
+            customerJobs: {
+              orderBy: { createdAt: "desc" },
+              select: {
+                id: true,
+                kind: true,
+                dueOn: true,
+                weekday: true,
+                startsOn: true,
+                notes: true,
+                active: true,
+                jobType: { select: { name: true } },
+              },
+            },
           },
         },
       },
-    },
-  });
+    }),
+    db.jobType.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true },
+    }),
+  ]);
 
   if (!customer) notFound();
+
+  const area = customer.areas[0];
 
   return (
     <div className="flex flex-col gap-10">
       <section className="flex flex-col gap-6">
         <div className="flex flex-col gap-1">
-          <Link href="/kunder" className="text-sm underline underline-offset-2">
+          <Link href="/kunder" className={backLinkClass}>
             ← Kunder
           </Link>
-          <h1 className="text-2xl font-bold">{customer.name}</h1>
+          <h1 className="text-display tracking-tight">{customer.name}</h1>
         </div>
 
         <CustomerForm
@@ -51,19 +75,50 @@ export default async function CustomerAdminPage({
             phone: customer.phone ?? "",
             address: customer.address ?? "",
             contractType: customer.contractType,
-            // Decimal kan ikke sendes til en klientkomponent
             annualValue: decimalToNumber(customer.annualValue),
             active: customer.active,
           }}
           submitLabel="Lagre kunde"
         />
+
+        <div className="max-w-2xl border-t border-line pt-6">
+          <p className="mb-3 text-meta text-navy-700">
+            Sletting fjerner kunden og all historikk permanent. Bruk heller
+            «Aktiv»-avhukingen hvis kunden bare skal skjules fra lista.
+          </p>
+          <DeleteCustomerButton
+            customerId={customer.id}
+            customerName={customer.name}
+          />
+        </div>
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-bold">Oppgavemaler</h2>
+        <h2 className="text-heading">Kalenderoppdrag</h2>
+        <p className="text-meta text-navy-700">
+          Bestilte jobber som skal inn i ukeplanen. Velg type fra rullgardinen.
+        </p>
+        <CustomerJobs
+          customerId={customer.id}
+          jobTypes={jobTypes}
+          jobs={(area?.customerJobs ?? []).map((job) => ({
+            id: job.id,
+            typeName: job.jobType.name,
+            kind: job.kind,
+            dueOn: job.dueOn ? formatDate(job.dueOn) : null,
+            weekday: job.weekday,
+            startsOn: formatDate(job.startsOn),
+            notes: job.notes,
+            active: job.active,
+          }))}
+        />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-heading">Oppgavemaler</h2>
         <TaskTemplates
           customerId={customer.id}
-          templates={customer.areas[0]?.taskTemplates ?? []}
+          templates={area?.taskTemplates ?? []}
         />
       </section>
     </div>

@@ -7,6 +7,7 @@ import type { IssueStatus } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
+import { photosFromFormData } from "@/lib/photos";
 import { issueSchema, type FormState } from "@/lib/validation";
 
 export async function createIssue(
@@ -23,6 +24,11 @@ export async function createIssue(
     return { errors: z.flattenError(result.error).fieldErrors };
   }
 
+  const photoResult = await photosFromFormData(formData);
+  if ("error" in photoResult) {
+    return { errors: { photos: [photoResult.error] } };
+  }
+
   const areaId = await primaryAreaId(customerId);
   if (!areaId) {
     return { message: "Kunden mangler område og kan ikke registreres på." };
@@ -34,11 +40,15 @@ export async function createIssue(
       userId: user.id,
       description: result.data.description,
       status: "OPEN",
+      photos: {
+        create: photoResult.photos,
+      },
     },
   });
 
   revalidatePath(`/kunde/${customerId}`);
   revalidatePath(`/kunde/${customerId}/avvik`);
+  revalidatePath("/uke");
   redirect(`/kunde/${customerId}?lagret=1`);
 }
 
@@ -57,4 +67,5 @@ export async function setIssueStatus(issueId: string, status: IssueStatus) {
 
   revalidatePath(`/kunde/${issue.area.customerId}`);
   revalidatePath(`/kunde/${issue.area.customerId}/avvik`);
+  revalidatePath("/uke");
 }

@@ -1,22 +1,34 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { FormState } from "@/lib/validation";
 import { createIssue } from "@/app/actions/issues";
-import { StickySubmit, textareaClass } from "@/components/mobile-form";
+import { PhotoPicker } from "@/components/photo-picker";
+import {
+  FieldError,
+  StickySubmit,
+  labelClass,
+  textareaClass,
+} from "@/components/mobile-form";
 
 export function IssueForm({ customerId }: { customerId: string }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     createIssue.bind(null, customerId),
     undefined,
   );
+  const [photos, setPhotos] = useState<File[]>([]);
+
+  function submit(formData: FormData) {
+    formData.delete("photos");
+    for (const file of photos) {
+      formData.append("photos", file);
+    }
+    formAction(formData);
+  }
 
   return (
-    <form action={formAction} className="flex flex-col gap-4 pb-4">
-      <label
-        htmlFor="description"
-        className="text-base font-semibold text-neutral-700"
-      >
+    <form action={submit} className="flex flex-col gap-4 pb-4">
+      <label htmlFor="description" className={labelClass}>
         Hva er avviket?
       </label>
       <textarea
@@ -26,20 +38,15 @@ export function IssueForm({ customerId }: { customerId: string }) {
         className={textareaClass}
       />
 
-      {state?.errors?.description?.map((error) => (
-        <p
-          key={error}
-          role="alert"
-          className="text-base font-medium text-red-800"
-        >
-          {error}
-        </p>
-      ))}
-      {state?.message && (
-        <p role="alert" className="text-base font-medium text-red-800">
-          {state.message}
-        </p>
-      )}
+      <FieldError messages={state?.errors?.description} />
+
+      <div className="flex flex-col gap-2">
+        <p className={labelClass}>Bilder</p>
+        <PhotoPicker files={photos} onChange={setPhotos} />
+      </div>
+
+      <FieldError messages={state?.errors?.photos} />
+      <FieldError messages={state?.message ? [state.message] : undefined} />
 
       <StickySubmit pending={pending}>Meld avvik</StickySubmit>
     </form>

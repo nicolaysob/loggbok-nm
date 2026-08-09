@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
 import { createCustomer } from "@/app/actions/customers";
+import { adminBackLinkClass as backLinkClass } from "@/lib/ui";
 import { CustomerForm, emptyCustomer } from "../customer-form";
 
 export default async function NewCustomerPage() {
@@ -9,13 +10,10 @@ export default async function NewCustomerPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <Link
-          href="/kunder"
-          className="text-sm underline underline-offset-2"
-        >
+        <Link href="/kunder" className={backLinkClass}>
           ← Kunder
         </Link>
-        <h1 className="text-2xl font-bold">Ny kunde</h1>
+        <h1 className="text-display tracking-tight">Ny kunde</h1>
       </div>
 
       <CustomerForm

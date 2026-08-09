@@ -2,6 +2,7 @@ import {
   ContractType,
   Frequency,
   IssueStatus,
+  JobScheduleKind,
   LogType,
 } from "@/generated/prisma/enums";
 
@@ -31,14 +32,29 @@ export const issueStatusLabels: Record<IssueStatus, string> = {
   CLOSED: "Lukket",
 };
 
-// Åpne avvik skal ligge øverst, lukkede nederst
+export const jobScheduleLabels: Record<JobScheduleKind, string> = {
+  ONCE: "Engangs",
+  WEEKLY: "Ukentlig",
+  BIWEEKLY: "Annenhver uke",
+  MONTHLY: "Månedlig",
+};
+
+export const weekdayLabels = [
+  "Mandag",
+  "Tirsdag",
+  "Onsdag",
+  "Torsdag",
+  "Fredag",
+  "Lørdag",
+  "Søndag",
+] as const;
+
 export const issueStatusOrder: IssueStatus[] = [
   "OPEN",
   "IN_PROGRESS",
   "CLOSED",
 ];
 
-// Frekvensene i den rekkefølgen de skal grupperes på oppgavesiden
 export const frequencyOrder: Frequency[] = [
   "DAILY",
   "WEEKLY",
@@ -55,3 +71,12 @@ export const frequencyOptions = Object.entries(frequencyLabels) as [
   Frequency,
   string,
 ][];
+
+export const jobScheduleOptions = Object.entries(jobScheduleLabels) as [
+  JobScheduleKind,
+  string,
+][];
+
+export const weekdayOptions = weekdayLabels.map(
+  (label, index) => [String(index), label] as const,
+);

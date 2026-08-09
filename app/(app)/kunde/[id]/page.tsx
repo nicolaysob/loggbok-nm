@@ -6,21 +6,23 @@ import { requireUser } from "@/lib/dal";
 import { formatDate } from "@/lib/time";
 import { decimalToNumber, formatHours } from "@/lib/format";
 import { issueStatusLabels, logTypeLabels } from "@/lib/labels";
+import {
+  backLinkClass,
+  cardStaticClass,
+  outlineActionClass,
+  solidActionClass,
+} from "@/lib/ui";
+import { PhotoThumbs } from "@/components/photo-thumbs";
 
 const RECENT_COUNT = 5;
 
-const actionButtonClass =
-  "flex min-h-20 items-center justify-center rounded-xl border-2 border-neutral-900 " +
-  "px-4 text-center text-xl font-semibold";
-
-// Avvik og ekstraarbeid skiller seg ut: det ene haster, det andre faktureres
 type EntryKind = LogType | "ISSUE";
 
 const badgeClasses: Record<EntryKind, string> = {
-  VISIT_NOTE: "border-neutral-900 bg-white text-neutral-900",
-  TASK_COMPLETION: "border-blue-800 bg-blue-50 text-blue-900",
-  EXTRA_WORK: "border-amber-700 bg-amber-50 text-amber-900",
-  ISSUE: "border-red-800 bg-red-50 text-red-900",
+  VISIT_NOTE: "bg-navy-100 text-navy-900",
+  TASK_COMPLETION: "bg-green-50 text-green-700",
+  EXTRA_WORK: "bg-navy-50 text-navy-900",
+  ISSUE: "bg-red-50 text-red-700",
 };
 
 const kindLabels: Record<EntryKind, string> = {
@@ -37,7 +39,35 @@ type TimelineItem = {
   hours: number | null;
   tasks: string[];
   status: IssueStatus | null;
+  photoUrls: string[];
 };
+
+const actions = [
+  {
+    href: "loggfor",
+    title: "Loggfør besøk",
+    hint: "Notat fra runden",
+    primary: true,
+  },
+  {
+    href: "oppgaver",
+    title: "Oppgaver",
+    hint: "Kryss av faste jobber",
+    primary: false,
+  },
+  {
+    href: "timer",
+    title: "Timeregistrering",
+    hint: "Ekstraarbeid til faktura",
+    primary: false,
+  },
+  {
+    href: "avvik",
+    title: "Meld avvik",
+    hint: "Feil og mangler",
+    primary: false,
+  },
+] as const;
 
 export default async function CustomerPage({
   params,
@@ -54,8 +84,6 @@ export default async function CustomerPage({
 
   if (!customer) notFound();
 
-  // Begge kilder hentes med samme grense. Toppen av den sammenslåtte lista må
-  // ligge innenfor toppen av hver enkelt, så det er nok å hente RECENT_COUNT av hver.
   const [logEntries, issues] = await Promise.all([
     db.logEntry.findMany({
       where: { area: { customerId: id } },
@@ -71,6 +99,7 @@ export default async function CustomerPage({
         completedTasks: {
           select: { taskTemplate: { select: { title: true } } },
         },
+        photos: { select: { url: true }, take: 3 },
       },
     }),
     db.issue.findMany({
@@ -83,6 +112,7 @@ export default async function CustomerPage({
         status: true,
         createdAt: true,
         user: { select: { name: true } },
+        photos: { select: { url: true }, take: 3 },
       },
     }),
   ]);
@@ -97,6 +127,7 @@ export default async function CustomerPage({
       hours: entry.hours === null ? null : decimalToNumber(entry.hours),
       tasks: entry.completedTasks.map((task) => task.taskTemplate.title),
       status: null,
+      photoUrls: entry.photos.map((photo) => photo.url),
     })),
     ...issues.map((issue) => ({
       key: `issue-${issue.id}`,
@@ -107,103 +138,107 @@ export default async function CustomerPage({
       hours: null,
       tasks: [],
       status: issue.status,
+      photoUrls: issue.photos.map((photo) => photo.url),
     })),
   ]
     .sort((a, b) => b.at.getTime() - a.at.getTime())
     .slice(0, RECENT_COUNT);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex animate-rise flex-col gap-8">
       {lagret && (
         <p
           role="status"
-          className="rounded-xl border-2 border-green-800 bg-green-50 px-4 py-3 text-base font-semibold text-green-900"
+          className="rounded-2xl border border-green-700/20 bg-green-50 px-4 py-3 text-body font-semibold text-green-700"
         >
           Registreringen er lagret.
         </p>
       )}
 
-      <div className="flex flex-col gap-1">
-        <Link
-          href="/"
-          className="inline-flex min-h-12 items-center text-base underline underline-offset-2"
-        >
+      <div className="flex flex-col gap-2">
+        <Link href="/" className={backLinkClass}>
           ← Kunder
         </Link>
-        <h1 className="text-2xl font-bold">{customer.name}</h1>
+        <h1 className="text-display tracking-tight">{customer.name}</h1>
+        <p className="text-body text-navy-700">Hva skal registreres?</p>
       </div>
 
       <div className="flex flex-col gap-3">
-        <Link
-          href={`/kunde/${customer.id}/loggfor`}
-          className={`${actionButtonClass} bg-neutral-900 text-white active:bg-neutral-700`}
-        >
-          Loggfør besøk
-        </Link>
-        <Link
-          href={`/kunde/${customer.id}/oppgaver`}
-          className={`${actionButtonClass} bg-white text-neutral-950 active:bg-neutral-100`}
-        >
-          Oppgaver
-        </Link>
-        <Link
-          href={`/kunde/${customer.id}/timer`}
-          className={`${actionButtonClass} bg-white text-neutral-950 active:bg-neutral-100`}
-        >
-          Timeregistrering
-        </Link>
-        <Link
-          href={`/kunde/${customer.id}/avvik`}
-          className={`${actionButtonClass} bg-white text-neutral-950 active:bg-neutral-100`}
-        >
-          Meld avvik
-        </Link>
+        {actions.map((action) => (
+          <Link
+            key={action.href}
+            href={`/kunde/${customer.id}/${action.href}`}
+            className={`flex min-h-20 items-center justify-between gap-3 rounded-2xl px-5 py-4 ${
+              action.primary ? solidActionClass : outlineActionClass
+            }`}
+          >
+            <span className="flex flex-col gap-0.5 text-left">
+              <span className="text-heading font-semibold">{action.title}</span>
+              <span
+                className={`text-meta font-medium ${
+                  action.primary ? "text-white/75" : "text-navy-700"
+                }`}
+              >
+                {action.hint}
+              </span>
+            </span>
+            <span
+              aria-hidden
+              className={`text-display leading-none ${
+                action.primary ? "text-white/50" : "text-navy-100"
+              }`}
+            >
+              ›
+            </span>
+          </Link>
+        ))}
       </div>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-base font-semibold text-neutral-700">
-          Siste registreringer
-        </h2>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-heading">Siste registreringer</h2>
 
         {recent.length === 0 ? (
-          <p className="text-base">Ingenting er registrert her ennå.</p>
+          <p className={`px-4 py-5 text-body text-navy-700 ${cardStaticClass}`}>
+            Ingenting er registrert her ennå.
+          </p>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-3">
             {recent.map((item) => (
-              <li
-                key={item.key}
-                className="rounded-xl border-2 border-neutral-300 px-4 py-3"
-              >
+              <li key={item.key} className={`px-4 py-3.5 ${cardStaticClass}`}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className={`rounded-full border px-2 py-0.5 text-sm font-semibold ${badgeClasses[item.kind]}`}
+                    className={`rounded-full px-3 py-1 text-meta font-semibold ${badgeClasses[item.kind]}`}
                   >
                     {kindLabels[item.kind]}
                   </span>
-                  <span className="text-base font-semibold text-neutral-950">
+                  <span className="font-mono text-meta font-medium text-navy-700">
                     {formatDate(item.at)}
                   </span>
                   {item.hours !== null && (
-                    <span className="text-base font-semibold text-neutral-950">
+                    <span className="font-mono text-meta font-semibold text-navy-900">
                       {formatHours(item.hours)} t
                     </span>
                   )}
                 </div>
 
-                <p className="text-sm text-neutral-700">
+                <p className="mt-1.5 text-meta font-medium text-navy-700">
                   {item.userName}
                   {item.status && <> · {issueStatusLabels[item.status]}</>}
                 </p>
 
                 {item.text && (
-                  <p className="mt-1 text-base text-neutral-950">{item.text}</p>
+                  <p className="mt-2 text-body whitespace-pre-wrap text-navy-900">
+                    {item.text}
+                  </p>
                 )}
 
                 {item.tasks.length > 0 && (
-                  <p className="mt-1 text-base text-neutral-950">
+                  <p className="mt-2 text-body text-navy-900">
                     {item.tasks.join(", ")}
                   </p>
                 )}
+
+                <PhotoThumbs urls={item.photoUrls} />
               </li>
             ))}
           </ul>

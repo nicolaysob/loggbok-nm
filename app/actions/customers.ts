@@ -62,3 +62,22 @@ export async function updateCustomer(
   revalidatePath(`/kunder/${id}`);
   return { message: "Kunden er lagret." };
 }
+
+export async function deleteCustomer(id: string) {
+  await requireAdmin();
+
+  const customer = await db.customer.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+  if (!customer) return;
+
+  // Områder, logger, avvik, oppgaver og bilder følger med via CASCADE
+  await db.customer.delete({ where: { id } });
+
+  revalidatePath("/");
+  revalidatePath("/kunder");
+  revalidatePath("/uke");
+  revalidatePath("/mnd");
+  redirect("/kunder");
+}

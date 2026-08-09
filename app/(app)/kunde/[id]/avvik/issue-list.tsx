@@ -3,6 +3,8 @@
 import type { IssueStatus } from "@/generated/prisma/enums";
 import { issueStatusLabels } from "@/lib/labels";
 import { setIssueStatus } from "@/app/actions/issues";
+import { cardStaticClass, outlineActionClass } from "@/lib/ui";
+import { PhotoThumbs } from "@/components/photo-thumbs";
 
 export type IssueItem = {
   id: string;
@@ -10,12 +12,15 @@ export type IssueItem = {
   status: IssueStatus;
   created: string;
   reportedBy: string;
+  photoUrls: string[];
 };
 
+// Åpent avvik er rødt. Under arbeid og lukket dempes ned til marineblått,
+// så bare det som faktisk krever handling roper.
 const badgeClasses: Record<IssueStatus, string> = {
-  OPEN: "border-red-800 bg-red-50 text-red-900",
-  IN_PROGRESS: "border-amber-700 bg-amber-50 text-amber-900",
-  CLOSED: "border-neutral-500 bg-neutral-100 text-neutral-700",
+  OPEN: "bg-red-50 text-red-700",
+  IN_PROGRESS: "bg-navy-50 text-navy-900",
+  CLOSED: "bg-navy-100 text-navy-700",
 };
 
 const allStatuses: IssueStatus[] = ["OPEN", "IN_PROGRESS", "CLOSED"];
@@ -26,30 +31,38 @@ export function IssueList({ issues }: { issues: IssueItem[] }) {
       {issues.map((issue) => (
         <li
           key={issue.id}
-          className="flex flex-col gap-3 rounded-xl border-2 border-neutral-300 px-4 py-3"
+          className={`flex flex-col gap-3 px-4 py-3 ${cardStaticClass}`}
         >
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className={`rounded-full border px-2 py-0.5 text-sm font-semibold ${badgeClasses[issue.status]}`}
+              className={`rounded-full px-3 py-1 text-meta font-semibold ${badgeClasses[issue.status]}`}
             >
               {issueStatusLabels[issue.status]}
             </span>
-            <span className="text-sm text-neutral-700">
-              {issue.created} · {issue.reportedBy}
+            <span className="font-mono text-meta font-medium text-navy-700">
+              {issue.created}
+            </span>
+            <span className="text-meta font-medium text-navy-700">
+              {issue.reportedBy}
             </span>
           </div>
 
-          <p className="text-base text-neutral-950">{issue.description}</p>
+          <p className="text-body text-navy-900">{issue.description}</p>
+
+          <PhotoThumbs urls={issue.photoUrls} />
 
           {/* Bare de statusene avviket ikke allerede har — ett trykk, ingen nedtrekksliste */}
           <div className="flex flex-wrap gap-2">
             {allStatuses
               .filter((status) => status !== issue.status)
               .map((status) => (
-                <form key={status} action={setIssueStatus.bind(null, issue.id, status)}>
+                <form
+                  key={status}
+                  action={setIssueStatus.bind(null, issue.id, status)}
+                >
                   <button
                     type="submit"
-                    className="min-h-12 rounded-xl border-2 border-neutral-900 px-4 text-base font-medium active:bg-neutral-100"
+                    className={`min-h-16 rounded-2xl px-4 text-meta font-semibold ${outlineActionClass}`}
                   >
                     {issueStatusLabels[status]}
                   </button>

@@ -19,7 +19,7 @@ export type TaskTemplateData = {
 };
 
 const iconButtonClass =
-  "rounded border border-black/25 px-2 py-2 text-sm hover:bg-black/5 disabled:opacity-40";
+  "rounded-lg border border-line bg-white px-2 py-2 text-meta shadow-soft hover:bg-navy-50 disabled:opacity-40";
 
 function TaskTemplateRow({
   template,
@@ -38,7 +38,7 @@ function TaskTemplateRow({
   return (
     // Flytteknappene til venstre, Slett helt til høyre bak en skillelinje.
     // Skjemaene er søsken — nøstede form-elementer er ugyldig HTML.
-    <li className="flex items-end gap-2 border-b border-black/10 py-3">
+    <li className="flex items-end gap-2 border-b border-line py-3">
       <div className="flex gap-1 pb-1">
         <form action={moveTaskTemplate.bind(null, template.id, "up")}>
           <button
@@ -100,7 +100,7 @@ function TaskTemplateRow({
           </Field>
         </div>
 
-        <SubmitButton pendingLabel="…">Lagre</SubmitButton>
+        <SubmitButton pendingLabel="…" variant="outline">Lagre</SubmitButton>
       </form>
 
       <form
@@ -110,11 +110,11 @@ function TaskTemplateRow({
             event.preventDefault();
           }
         }}
-        className="ml-8 border-l border-black/10 pl-6"
+        className="ml-8 border-l border-line pl-6"
       >
         <button
           type="submit"
-          className="rounded border border-red-700/40 px-3 py-2 text-sm text-red-700 hover:bg-red-50"
+          className="rounded-lg border border-red-700/30 px-3 py-2 text-meta text-red-700 hover:bg-red-50"
         >
           Slett
         </button>
@@ -164,7 +164,7 @@ function NewTaskTemplateForm({ customerId }: { customerId: string }) {
         </Field>
       </div>
 
-      <SubmitButton pendingLabel="Legger til …">Legg til</SubmitButton>
+      <SubmitButton pendingLabel="Legger til …" variant="outline">Legg til</SubmitButton>
       <Feedback message={state?.message} />
     </form>
   );
@@ -180,7 +180,7 @@ export function TaskTemplates({
   return (
     <div className="flex max-w-4xl flex-col gap-4">
       {templates.length === 0 ? (
-        <p className="text-sm text-neutral-600">
+        <p className="text-meta font-medium text-navy-700">
           Ingen oppgavemaler er lagt inn på denne kunden ennå.
         </p>
       ) : (

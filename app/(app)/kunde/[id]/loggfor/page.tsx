@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
+import { backLinkClass } from "@/lib/ui";
 import { LogForm } from "./log-form";
 
 export default async function LogVisitPage({
@@ -19,14 +20,11 @@ export default async function LogVisitPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <Link
-          href={`/kunde/${customer.id}`}
-          className="inline-flex min-h-12 items-center text-base underline underline-offset-2"
-        >
+      <div className="flex flex-col gap-2">
+        <Link href={`/kunde/${customer.id}`} className={backLinkClass}>
           ← {customer.name}
         </Link>
-        <h1 className="text-2xl font-bold">Loggfør besøk</h1>
+        <h1 className="text-display tracking-tight">Loggfør besøk</h1>
       </div>
 
       <LogForm customerId={customer.id} />

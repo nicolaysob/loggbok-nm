@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
+import { photosFromFormData } from "@/lib/photos";
 import {
   extraWorkSchema,
   visitNoteSchema,
@@ -17,6 +18,8 @@ const MISSING_AREA = "Kunden mangler område og kan ikke registreres på.";
 function done(customerId: string): never {
   revalidatePath("/");
   revalidatePath(`/kunde/${customerId}`);
+  revalidatePath("/uke");
+  revalidatePath("/mnd");
   redirect(`/kunde/${customerId}?lagret=1`);
 }
 
@@ -34,6 +37,11 @@ export async function createVisitNote(
     return { errors: z.flattenError(result.error).fieldErrors };
   }
 
+  const photoResult = await photosFromFormData(formData);
+  if ("error" in photoResult) {
+    return { errors: { photos: [photoResult.error] } };
+  }
+
   const areaId = await primaryAreaId(customerId);
   if (!areaId) return { message: MISSING_AREA };
 
@@ -44,6 +52,9 @@ export async function createVisitNote(
       occurredAt: new Date(),
       type: "VISIT_NOTE",
       comment: result.data.comment,
+      photos: {
+        create: photoResult.photos,
+      },
     },
   });
 

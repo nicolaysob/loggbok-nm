@@ -6,13 +6,29 @@ const createPrismaClient = () =>
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
   });
 
-// Gjenbruk klienten i dev — ellers lager hot reload en ny tilkobling for hver endring
+// Versjonsnøkkel — økes når schema får nye modeller, så hot reload ikke
+// gjenbruker en gammel klient uten f.eks. customerJob.
+const PRISMA_VERSION = "user-username-1";
+
 const globalForPrisma = globalThis as unknown as {
+  prismaVersion?: string;
   prisma?: ReturnType<typeof createPrismaClient>;
 };
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
+function getDb() {
+  if (
+    globalForPrisma.prisma &&
+    globalForPrisma.prismaVersion === PRISMA_VERSION
+  ) {
+    return globalForPrisma.prisma;
+  }
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = db;
+  const client = createPrismaClient();
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client;
+    globalForPrisma.prismaVersion = PRISMA_VERSION;
+  }
+  return client;
 }
+
+export const db = getDb();
