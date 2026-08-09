@@ -20,7 +20,16 @@ export async function login(
     return { error: "Fyll inn både brukernavn og passord." };
   }
 
-  const user = await db.user.findUnique({ where: { username } });
+  let user;
+  try {
+    user = await db.user.findUnique({ where: { username } });
+  } catch (error) {
+    console.error("Login database error:", error);
+    return {
+      error:
+        "Kunne ikke koble til databasen. Sjekk DATABASE_URL (Transaction pooler) i Vercel.",
+    };
+  }
 
   // Samme feilmelding uansett — så ingen kan kartlegge hvilke brukere som finnes
   if (!user || !(await compare(password, user.passwordHash))) {
