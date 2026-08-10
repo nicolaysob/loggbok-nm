@@ -12,11 +12,27 @@ export const getCurrentUser = cache(async () => {
   const session = await decrypt(cookieStore.get(SESSION_COOKIE)?.value);
   if (!session) return null;
 
-  return db.user.findUnique({
+  // findUnique tar bare unike felt — aktiv sjekkes etterpå
+  const user = await db.user.findUnique({
     where: { id: session.userId },
-    // Aldri hent passordHash inn i render-laget
-    select: { id: true, name: true, email: true, role: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      payType: true,
+      active: true,
+    },
   });
+  if (!user?.active) return null;
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    payType: user.payType,
+  };
 });
 
 // Den faktiske sikkerhetsgrensen. Kall denne i hver beskyttet side og
@@ -24,6 +40,14 @@ export const getCurrentUser = cache(async () => {
 export const requireUser = cache(async () => {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  return user;
+});
+
+// Timesbetalte ansatte — fastlønn sendes til forsiden.
+export const requireHourlyUser = cache(async () => {
+  const user = await requireUser();
+  if (user.role === "ADMIN") redirect("/lonn");
+  if (user.payType !== "HOURLY") redirect("/");
   return user;
 });
 

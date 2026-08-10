@@ -32,7 +32,7 @@ export async function login(
   }
 
   // Samme feilmelding uansett — så ingen kan kartlegge hvilke brukere som finnes
-  if (!user || !(await compare(password, user.passwordHash))) {
+  if (!user || !user.active || !(await compare(password, user.passwordHash))) {
     return { error: "Feil brukernavn eller passord." };
   }
 

@@ -8,7 +8,7 @@ const createPrismaClient = () =>
 
 // Versjonsnøkkel — økes når schema får nye modeller, så hot reload ikke
 // gjenbruker en gammel klient uten f.eks. customerJob.
-const PRISMA_VERSION = "job-title-billing-1";
+const PRISMA_VERSION = "pay-type-2";
 
 const globalForPrisma = globalThis as unknown as {
   prismaVersion?: string;

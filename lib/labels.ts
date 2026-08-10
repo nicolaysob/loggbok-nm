@@ -4,6 +4,8 @@ import {
   IssueStatus,
   JobScheduleKind,
   LogType,
+  PayType,
+  Role,
 } from "@/generated/prisma/enums";
 
 export const contractTypeLabels: Record<ContractType, string> = {
@@ -30,6 +32,16 @@ export const issueStatusLabels: Record<IssueStatus, string> = {
   OPEN: "Åpen",
   IN_PROGRESS: "Under arbeid",
   CLOSED: "Lukket",
+};
+
+export const roleLabels: Record<Role, string> = {
+  ADMIN: "Admin",
+  EMPLOYEE: "Ansatt",
+};
+
+export const payTypeLabels: Record<PayType, string> = {
+  FIXED: "Fast lønn",
+  HOURLY: "Timesbetalt",
 };
 
 export const jobScheduleLabels: Record<JobScheduleKind, string> = {
@@ -74,6 +86,13 @@ export const frequencyOptions = Object.entries(frequencyLabels) as [
 
 export const jobScheduleOptions = Object.entries(jobScheduleLabels) as [
   JobScheduleKind,
+  string,
+][];
+
+export const roleOptions = Object.entries(roleLabels) as [Role, string][];
+
+export const payTypeOptions = Object.entries(payTypeLabels) as [
+  PayType,
   string,
 ][];
 

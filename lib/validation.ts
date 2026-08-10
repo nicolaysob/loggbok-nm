@@ -3,6 +3,8 @@ import {
   ContractType,
   Frequency,
   JobScheduleKind,
+  PayType,
+  Role,
 } from "@/generated/prisma/enums";
 import { parseDecimal } from "@/lib/format";
 
@@ -95,6 +97,46 @@ export const customerJobSchema = z
       });
     }
   });
+
+export const createUserSchema = z.object({
+  name: z.string().trim().min(1, { error: "Navn må fylles ut" }),
+  username: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(2, { error: "Brukernavn må ha minst 2 tegn" })
+    .max(32, { error: "Brukernavn er for langt" })
+    .regex(/^[a-z0-9._-]+$/, {
+      error: "Bare små bokstaver, tall, punktum, - og _",
+    }),
+  password: z
+    .string()
+    .min(4, { error: "Passord må ha minst 4 tegn" })
+    .max(72, { error: "Passord er for langt" }),
+  role: z.enum(Role, { error: "Velg rolle" }),
+  payType: z.enum(PayType, { error: "Velg lønnstype" }),
+});
+
+export const resetPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(4, { error: "Passord må ha minst 4 tegn" })
+    .max(72, { error: "Passord er for langt" }),
+});
+
+export const timeEntrySchema = z.object({
+  workedOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Velg dato" }),
+  hours: z.preprocess(
+    (value) => parseDecimal(String(value ?? "")),
+    z
+      .number({ error: "Fyll inn antall timer" })
+      .min(0.5, { error: "Minst 0,5 time" })
+      .max(24, { error: "Maks 24 timer per registrering" }),
+  ),
+  comment: z.string().trim().min(1, { error: "Skriv en kort kommentar" }),
+});
 
 export type FormState =
   | {

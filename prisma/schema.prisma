@@ -43,6 +43,12 @@ enum Role {
   EMPLOYEE
 }
 
+// Lønnstype — timesbetalte får timeliste
+enum PayType {
+  FIXED
+  HOURLY
+}
+
 // Hvordan et kundeoppdrag gjentas i kalenderen
 enum JobScheduleKind {
   ONCE
@@ -190,14 +196,35 @@ model User {
   name         String
   email        String? @unique
   passwordHash String
-  role         Role   @default(EMPLOYEE)
+  role         Role    @default(EMPLOYEE)
+  active       Boolean @default(true)
+  payType      PayType @default(FIXED)
 
   logEntries     LogEntry[]
   issues         Issue[]
   jobCompletions JobCompletion[]
+  timeEntries    TimeEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Lønnstimer — ansattes egne timer til utbetaling (ikke fakturerbart ekstraarbeid)
+model TimeEntry {
+  id       String   @id @default(cuid())
+  userId   String
+  // Kalenderdagen arbeidet ble utført (midnatt Oslo)
+  workedOn DateTime
+  hours    Decimal  @db.Decimal(5, 2)
+  comment  String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, workedOn])
+  @@index([workedOn])
 }
 
 // Felles oppdragstyper i rullgardinen (plenklipp, maling, …)
