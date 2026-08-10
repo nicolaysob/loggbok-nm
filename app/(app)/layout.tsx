@@ -17,6 +17,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       links: [
         { href: "/", label: "Hjem" },
         { href: "/kalender", label: "Kalender" },
+        ...(isAdmin ? [{ href: "/ukeplan", label: "Ukeplan" }] : []),
         ...(!isAdmin && user?.payType === "HOURLY"
           ? [{ href: "/timeliste", label: "Timeliste" }]
           : []),
