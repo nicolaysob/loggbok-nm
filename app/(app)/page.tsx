@@ -51,6 +51,13 @@ export default async function HomePage() {
             take: 1,
             select: { occurredAt: true },
           },
+          _count: {
+            select: {
+              issues: {
+                where: { status: { in: ["OPEN", "IN_PROGRESS"] } },
+              },
+            },
+          },
         },
       },
     },
@@ -62,17 +69,29 @@ export default async function HomePage() {
         .map((area) => area.logEntries[0]?.occurredAt)
         .filter((date) => date !== undefined);
 
+      const openIssues = customer.areas.reduce(
+        (sum, area) => sum + area._count.issues,
+        0,
+      );
+
       return {
         id: customer.id,
         name: customer.name,
+        openIssues,
         lastVisit:
           visits.length === 0
             ? null
             : new Date(Math.max(...visits.map((date) => date.getTime()))),
       };
     })
-    // Aldri besøkt øverst, deretter eldste besøk — det mest forsømte først
+    // Åpne avvik øverst, deretter eldste besøk
     .sort((a, b) => {
+      if (a.openIssues > 0 !== b.openIssues > 0) {
+        return a.openIssues > 0 ? -1 : 1;
+      }
+      if (b.openIssues !== a.openIssues) {
+        return b.openIssues - a.openIssues;
+      }
       if (!a.lastVisit && !b.lastVisit) {
         return a.name.localeCompare(b.name, "nb-NO");
       }
@@ -82,6 +101,7 @@ export default async function HomePage() {
     });
 
   const firstName = user.name.split(/\s+/)[0] ?? user.name;
+  const totalOpen = sorted.reduce((sum, row) => sum + row.openIssues, 0);
 
   if (sorted.length === 0) {
     return (
@@ -110,8 +130,10 @@ export default async function HomePage() {
         </p>
         <h1 className="text-display tracking-tight">Hei, {firstName}</h1>
         <p className="text-body text-navy-700">
-          Trykk på en kunde for å loggføre. De som har ventet lengst står
-          øverst.
+          Trykk på en kunde for å loggføre.
+          {totalOpen > 0
+            ? ` ${totalOpen} åpne avvik står øverst.`
+            : " De som har ventet lengst står øverst."}
         </p>
       </div>
 
@@ -122,11 +144,22 @@ export default async function HomePage() {
             <li key={customer.id}>
               <Link
                 href={`/kunde/${customer.id}`}
-                className={`flex min-h-16 items-center gap-3 px-4 py-3.5 text-navy-900 ${cardClass}`}
+                className={`flex min-h-16 items-center gap-3 px-4 py-3.5 text-navy-900 ${cardClass} ${
+                  customer.openIssues > 0
+                    ? "border-red-700/25 bg-red-50/40"
+                    : ""
+                }`}
               >
                 <span className="min-w-0 flex-1 truncate text-heading">
                   {customer.name}
                 </span>
+                {customer.openIssues > 0 && (
+                  <span className="shrink-0 rounded-full bg-red-50 px-3 py-1 text-meta font-semibold text-red-700">
+                    {customer.openIssues === 1
+                      ? "1 avvik"
+                      : `${customer.openIssues} avvik`}
+                  </span>
+                )}
                 <span
                   className={`shrink-0 rounded-full px-3 py-1 font-mono text-meta font-semibold ${tone.className}`}
                 >

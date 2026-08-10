@@ -14,21 +14,7 @@ const optionalText = z
 
 export const customerSchema = z.object({
   name: z.string().trim().min(1, { error: "Navn må fylles ut" }),
-  contactPerson: optionalText,
-  email: optionalText.refine(
-    (value) => value === null || z.email().safeParse(value).success,
-    { error: "Ugyldig e-postadresse" },
-  ),
-  phone: optionalText,
-  address: optionalText,
   contractType: z.enum(ContractType, { error: "Velg kontraktstype" }),
-  annualValue: z.preprocess(
-    (value) => parseDecimal(String(value ?? "")),
-    z
-      .number({ error: "Kontraktssum må fylles ut som et tall" })
-      .min(0, { error: "Kontraktssum kan ikke være negativ" })
-      .max(99_999_999.99, { error: "Kontraktssum er for høy" }),
-  ),
   active: z.boolean(),
 });
 

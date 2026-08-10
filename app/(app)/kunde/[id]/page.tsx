@@ -13,6 +13,7 @@ import {
   solidActionClass,
 } from "@/lib/ui";
 import { PhotoThumbs } from "@/components/photo-thumbs";
+import { IssueList } from "./avvik/issue-list";
 
 const RECENT_COUNT = 5;
 
@@ -84,7 +85,7 @@ export default async function CustomerPage({
 
   if (!customer) notFound();
 
-  const [logEntries, issues] = await Promise.all([
+  const [logEntries, issues, openIssues] = await Promise.all([
     db.logEntry.findMany({
       where: { area: { customerId: id } },
       orderBy: { occurredAt: "desc" },
@@ -106,6 +107,21 @@ export default async function CustomerPage({
       where: { area: { customerId: id } },
       orderBy: { createdAt: "desc" },
       take: RECENT_COUNT,
+      select: {
+        id: true,
+        description: true,
+        status: true,
+        createdAt: true,
+        user: { select: { name: true } },
+        photos: { select: { url: true }, take: 3 },
+      },
+    }),
+    db.issue.findMany({
+      where: {
+        area: { customerId: id },
+        status: { in: ["OPEN", "IN_PROGRESS"] },
+      },
+      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         description: true,
@@ -162,6 +178,30 @@ export default async function CustomerPage({
         <h1 className="text-display tracking-tight">{customer.name}</h1>
         <p className="text-body text-navy-700">Hva skal registreres?</p>
       </div>
+
+      {openIssues.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-heading text-red-700">Åpne avvik</h2>
+            <Link
+              href={`/kunde/${customer.id}/avvik`}
+              className="text-meta font-semibold text-red-700 underline"
+            >
+              Se alle
+            </Link>
+          </div>
+          <IssueList
+            issues={openIssues.map((issue) => ({
+              id: issue.id,
+              description: issue.description,
+              status: issue.status,
+              created: formatDate(issue.createdAt),
+              reportedBy: issue.user.name,
+              photoUrls: issue.photos.map((photo) => photo.url),
+            }))}
+          />
+        </section>
+      )}
 
       <div className="flex flex-col gap-3">
         {actions.map((action) => (

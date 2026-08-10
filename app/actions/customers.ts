@@ -10,12 +10,7 @@ import { customerSchema, type FormState } from "@/lib/validation";
 function readCustomerForm(formData: FormData) {
   return {
     name: formData.get("name"),
-    contactPerson: formData.get("contactPerson"),
-    email: formData.get("email"),
-    phone: formData.get("phone"),
-    address: formData.get("address"),
     contractType: formData.get("contractType"),
-    annualValue: formData.get("annualValue"),
     active: formData.get("active") === "on",
   };
 }
@@ -35,7 +30,10 @@ export async function createCustomer(
   // områder i det hele tatt før en kunde faktisk må deles opp i flere anlegg.
   const customer = await db.customer.create({
     data: {
-      ...result.data,
+      name: result.data.name,
+      contractType: result.data.contractType,
+      active: result.data.active,
+      annualValue: 0,
       areas: { create: { name: result.data.name } },
     },
   });
@@ -56,7 +54,14 @@ export async function updateCustomer(
     return { errors: z.flattenError(result.error).fieldErrors };
   }
 
-  await db.customer.update({ where: { id }, data: result.data });
+  await db.customer.update({
+    where: { id },
+    data: {
+      name: result.data.name,
+      contractType: result.data.contractType,
+      active: result.data.active,
+    },
+  });
 
   revalidatePath("/kunder");
   revalidatePath(`/kunder/${id}`);
@@ -79,5 +84,5 @@ export async function deleteCustomer(id: string) {
   revalidatePath("/kunder");
   revalidatePath("/uke");
   revalidatePath("/mnd");
-  redirect("/kunder");
+  revalidatePath("/kalender");
 }

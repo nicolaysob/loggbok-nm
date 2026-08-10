@@ -48,6 +48,7 @@ export async function createIssue(
 
   revalidatePath(`/kunde/${customerId}`);
   revalidatePath(`/kunde/${customerId}/avvik`);
+  revalidatePath("/");
   revalidatePath("/uke");
   redirect(`/kunde/${customerId}?lagret=1`);
 }
@@ -67,5 +68,6 @@ export async function setIssueStatus(issueId: string, status: IssueStatus) {
 
   revalidatePath(`/kunde/${issue.area.customerId}`);
   revalidatePath(`/kunde/${issue.area.customerId}/avvik`);
+  revalidatePath("/");
   revalidatePath("/uke");
 }

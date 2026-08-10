@@ -19,11 +19,18 @@ export type IssueItem = {
 // så bare det som faktisk krever handling roper.
 const badgeClasses: Record<IssueStatus, string> = {
   OPEN: "bg-red-50 text-red-700",
-  IN_PROGRESS: "bg-navy-50 text-navy-900",
+  IN_PROGRESS: "bg-amber-50 text-amber-700",
   CLOSED: "bg-navy-100 text-navy-700",
 };
 
 const allStatuses: IssueStatus[] = ["OPEN", "IN_PROGRESS", "CLOSED"];
+
+// Handlingsknapper — tydeligere enn bare statusnavnet
+const statusActionLabels: Record<IssueStatus, string> = {
+  OPEN: "Sett åpen",
+  IN_PROGRESS: "Under arbeid",
+  CLOSED: "Lukk (utbedret)",
+};
 
 export function IssueList({ issues }: { issues: IssueItem[] }) {
   return (
@@ -31,7 +38,13 @@ export function IssueList({ issues }: { issues: IssueItem[] }) {
       {issues.map((issue) => (
         <li
           key={issue.id}
-          className={`flex flex-col gap-3 px-4 py-3 ${cardStaticClass}`}
+          className={`flex flex-col gap-3 px-4 py-3 ${cardStaticClass} ${
+            issue.status === "OPEN"
+              ? "border-red-700/25 bg-red-50/50"
+              : issue.status === "IN_PROGRESS"
+                ? "border-amber-700/20 bg-amber-50/40"
+                : ""
+          }`}
         >
           <div className="flex flex-wrap items-center gap-2">
             <span
@@ -51,7 +64,6 @@ export function IssueList({ issues }: { issues: IssueItem[] }) {
 
           <PhotoThumbs urls={issue.photoUrls} />
 
-          {/* Bare de statusene avviket ikke allerede har — ett trykk, ingen nedtrekksliste */}
           <div className="flex flex-wrap gap-2">
             {allStatuses
               .filter((status) => status !== issue.status)
@@ -62,9 +74,13 @@ export function IssueList({ issues }: { issues: IssueItem[] }) {
                 >
                   <button
                     type="submit"
-                    className={`min-h-16 rounded-2xl px-4 text-meta font-semibold ${outlineActionClass}`}
+                    className={`min-h-14 rounded-2xl px-4 text-meta font-semibold ${
+                      status === "CLOSED"
+                        ? "border border-green-700/30 bg-green-50 text-green-700 active:bg-green-50"
+                        : outlineActionClass
+                    }`}
                   >
-                    {issueStatusLabels[status]}
+                    {statusActionLabels[status]}
                   </button>
                 </form>
               ))}

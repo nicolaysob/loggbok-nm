@@ -4,14 +4,12 @@ import Link from "next/link";
 import { deleteCustomer } from "@/app/actions/customers";
 import { contractTypeLabels } from "@/lib/labels";
 import type { ContractType } from "@/generated/prisma/enums";
-import { formatKroner } from "@/lib/format";
 
 export type CustomerRow = {
   id: string;
   name: string;
   active: boolean;
   contractType: ContractType;
-  annualValue: number;
 };
 
 export function CustomerTable({ customers }: { customers: CustomerRow[] }) {
@@ -21,10 +19,7 @@ export function CustomerTable({ customers }: { customers: CustomerRow[] }) {
         <thead>
           <tr className="border-b border-line bg-navy-50/70 text-left">
             <th className="px-4 py-3 font-semibold">Navn</th>
-            <th className="hidden px-4 py-3 font-semibold sm:table-cell">
-              Kontraktstype
-            </th>
-            <th className="px-4 py-3 text-right font-semibold">Årlig sum</th>
+            <th className="px-4 py-3 font-semibold">Kontraktstype</th>
             <th className="px-4 py-3 text-right font-semibold">
               <span className="sr-only">Handlinger</span>
             </th>
@@ -48,15 +43,9 @@ export function CustomerTable({ customers }: { customers: CustomerRow[] }) {
                     (inaktiv)
                   </span>
                 )}
-                <p className="mt-0.5 text-meta text-navy-700 sm:hidden">
-                  {contractTypeLabels[customer.contractType]}
-                </p>
               </td>
-              <td className="hidden px-4 py-3.5 text-navy-700 sm:table-cell">
+              <td className="px-4 py-3.5 text-navy-700">
                 {contractTypeLabels[customer.contractType]}
-              </td>
-              <td className="px-4 py-3.5 text-right font-mono tabular-nums text-navy-900">
-                {formatKroner(customer.annualValue)} kr
               </td>
               <td className="px-4 py-3.5 text-right">
                 <form

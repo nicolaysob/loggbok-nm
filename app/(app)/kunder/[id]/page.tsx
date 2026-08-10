@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
-import { decimalToNumber } from "@/lib/format";
 import { formatDate } from "@/lib/time";
 import { updateCustomer } from "@/app/actions/customers";
 import { adminBackLinkClass as backLinkClass } from "@/lib/ui";
@@ -71,18 +70,13 @@ export default async function CustomerAdminPage({
           action={updateCustomer.bind(null, customer.id)}
           values={{
             name: customer.name,
-            contactPerson: customer.contactPerson ?? "",
-            email: customer.email ?? "",
-            phone: customer.phone ?? "",
-            address: customer.address ?? "",
             contractType: customer.contractType,
-            annualValue: decimalToNumber(customer.annualValue),
             active: customer.active,
           }}
           submitLabel="Lagre kunde"
         />
 
-        <div className="max-w-2xl border-t border-line pt-6">
+        <div className="max-w-lg border-t border-line pt-6">
           <p className="mb-3 text-meta text-navy-700">
             Sletting fjerner kunden og all historikk permanent. Bruk heller
             «Aktiv»-avhukingen hvis kunden bare skal skjules fra lista.

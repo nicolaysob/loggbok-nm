@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
-import { decimalToNumber } from "@/lib/format";
 import { CustomerTable } from "./customer-table";
 
 export default async function CustomersPage() {
@@ -15,7 +14,7 @@ export default async function CustomersPage() {
         <div className="flex flex-col gap-1">
           <h1 className="text-display tracking-tight">Kunder</h1>
           <p className="text-body text-navy-700">
-            Rediger kundeinformasjon og oppgavemaler.
+            Rediger kunder, kalenderoppdrag og oppgavemaler.
           </p>
         </div>
         <Link
@@ -37,7 +36,6 @@ export default async function CustomersPage() {
             name: customer.name,
             active: customer.active,
             contractType: customer.contractType,
-            annualValue: decimalToNumber(customer.annualValue),
           }))}
         />
       )}
