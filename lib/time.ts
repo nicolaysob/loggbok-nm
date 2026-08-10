@@ -23,6 +23,44 @@ export function formatDate(date: Date): string {
   return norwegianDate.format(date);
 }
 
+const norwegianMonthYear = new Intl.DateTimeFormat("nb-NO", {
+  month: "long",
+  year: "numeric",
+  timeZone: "Europe/Oslo",
+});
+
+/** «august 2026» → «August 2026» */
+export function formatMonthYear(date: Date): string {
+  const label = norwegianMonthYear.format(date);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+export function monthKey(date: Date): string {
+  const [year, month] = osloDate.format(date).split("-");
+  return `${year}-${month}`;
+}
+
+/** Grupperer allerede sorterte elementer (nyeste først) i månedsseksjoner. */
+export function groupByMonth<T>(
+  items: T[],
+  getDate: (item: T) => Date,
+): { key: string; label: string; items: T[] }[] {
+  const groups: { key: string; label: string; items: T[] }[] = [];
+
+  for (const item of items) {
+    const at = getDate(item);
+    const key = monthKey(at);
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.items.push(item);
+    } else {
+      groups.push({ key, label: formatMonthYear(at), items: [item] });
+    }
+  }
+
+  return groups;
+}
+
 export function daysSince(date: Date, now: Date = new Date()): number {
   return osloDayNumber(now) - osloDayNumber(date);
 }

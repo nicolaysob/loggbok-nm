@@ -28,6 +28,7 @@ export async function createCustomerMessage(
   });
 
   revalidatePath("/portal");
+  revalidatePath("/portal/meldinger");
   revalidatePath(`/kunde/${user.customerId}`);
   revalidatePath("/");
   return { message: "Meldingen er sendt." };
@@ -50,6 +51,8 @@ export async function signCustomerMessage(messageId: string): Promise<void> {
     },
   });
 
+  revalidatePath("/portal");
+  revalidatePath("/portal/meldinger");
   revalidatePath(`/kunde/${message.customerId}`);
   revalidatePath(`/kunde/${message.customerId}/meldingsarkiv`);
   revalidatePath("/");

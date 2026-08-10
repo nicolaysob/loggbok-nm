@@ -1,48 +1,22 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { IssueStatus, LogType } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { formatDate } from "@/lib/time";
-import { decimalToNumber, formatHours } from "@/lib/format";
-import { issueStatusLabels, logTypeLabels } from "@/lib/labels";
+import {
+  getCustomerActivity,
+  recentActivitySince,
+  RECENT_ACTIVITY_LIMIT,
+} from "@/lib/customer-activity";
 import {
   backLinkClass,
   cardStaticClass,
   outlineActionClass,
   solidActionClass,
 } from "@/lib/ui";
-import { PhotoThumbs } from "@/components/photo-thumbs";
+import { ActivityList } from "@/components/activity-list";
 import { IssueList } from "./avvik/issue-list";
 import { SignMessageButton } from "./sign-message-button";
-
-const RECENT_COUNT = 5;
-
-type EntryKind = LogType | "ISSUE";
-
-const badgeClasses: Record<EntryKind, string> = {
-  VISIT_NOTE: "bg-navy-100 text-navy-900",
-  TASK_COMPLETION: "bg-green-50 text-green-700",
-  EXTRA_WORK: "bg-navy-50 text-navy-900",
-  ISSUE: "bg-red-50 text-red-700",
-};
-
-const kindLabels: Record<EntryKind, string> = {
-  ...logTypeLabels,
-  ISSUE: "Avvik",
-};
-
-type TimelineItem = {
-  key: string;
-  kind: EntryKind;
-  at: Date;
-  userName: string;
-  text: string | null;
-  hours: number | null;
-  tasks: string[];
-  status: IssueStatus | null;
-  photoUrls: string[];
-};
 
 const actions = [
   {
@@ -92,96 +66,37 @@ export default async function CustomerPage({
 
   if (!customer) notFound();
 
-  const [logEntries, issues, openIssues, openMessages, messageCount] =
-    await Promise.all([
-      db.logEntry.findMany({
-        where: { area: { customerId: id } },
-        orderBy: { occurredAt: "desc" },
-        take: RECENT_COUNT,
-        select: {
-          id: true,
-          type: true,
-          occurredAt: true,
-          hours: true,
-          comment: true,
-          user: { select: { name: true } },
-          completedTasks: {
-            select: { taskTemplate: { select: { title: true } } },
-          },
-          photos: { select: { url: true }, take: 3 },
-        },
-      }),
-      db.issue.findMany({
-        where: { area: { customerId: id } },
-        orderBy: { createdAt: "desc" },
-        take: RECENT_COUNT,
-        select: {
-          id: true,
-          description: true,
-          status: true,
-          createdAt: true,
-          user: { select: { name: true } },
-          photos: { select: { url: true }, take: 3 },
-        },
-      }),
-      db.issue.findMany({
-        where: {
-          area: { customerId: id },
-          status: { in: ["OPEN", "IN_PROGRESS"] },
-        },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          description: true,
-          status: true,
-          createdAt: true,
-          user: { select: { name: true } },
-          photos: { select: { url: true }, take: 3 },
-        },
-      }),
-      db.customerMessage.findMany({
-        where: { customerId: id, readAt: null },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          body: true,
-          createdAt: true,
-          user: { select: { name: true } },
-        },
-      }),
-      db.customerMessage.count({
-        where: { customerId: id },
-      }),
-    ]);
-
-  const hasAnyMessages = messageCount > 0;
-
-  const recent: TimelineItem[] = [
-    ...logEntries.map((entry) => ({
-      key: `log-${entry.id}`,
-      kind: entry.type as EntryKind,
-      at: entry.occurredAt,
-      userName: entry.user.name,
-      text: entry.comment,
-      hours: entry.hours === null ? null : decimalToNumber(entry.hours),
-      tasks: entry.completedTasks.map((task) => task.taskTemplate.title),
-      status: null,
-      photoUrls: entry.photos.map((photo) => photo.url),
-    })),
-    ...issues.map((issue) => ({
-      key: `issue-${issue.id}`,
-      kind: "ISSUE" as const,
-      at: issue.createdAt,
-      userName: issue.user.name,
-      text: issue.description,
-      hours: null,
-      tasks: [],
-      status: issue.status,
-      photoUrls: issue.photos.map((photo) => photo.url),
-    })),
-  ]
-    .sort((a, b) => b.at.getTime() - a.at.getTime())
-    .slice(0, RECENT_COUNT);
+  const [openIssues, openMessages, recentActivity] = await Promise.all([
+    db.issue.findMany({
+      where: {
+        area: { customerId: id },
+        status: { in: ["OPEN", "IN_PROGRESS"] },
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        description: true,
+        status: true,
+        createdAt: true,
+        user: { select: { name: true } },
+        photos: { select: { url: true }, take: 3 },
+      },
+    }),
+    db.customerMessage.findMany({
+      where: { customerId: id, readAt: null },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        body: true,
+        createdAt: true,
+        user: { select: { name: true } },
+      },
+    }),
+    getCustomerActivity(id, {
+      since: recentActivitySince(),
+      take: RECENT_ACTIVITY_LIMIT,
+    }),
+  ]);
 
   return (
     <div className="flex animate-rise flex-col gap-8">
@@ -233,35 +148,33 @@ export default async function CustomerPage({
         ))}
       </div>
 
-      {hasAnyMessages && (
+      {openMessages.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-heading text-navy-900">Meldinger fra kunden</h2>
-          {openMessages.length === 0 ? (
-            <p className={`px-4 py-4 text-body text-navy-700 ${cardStaticClass}`}>
-              Ingen nye meldinger
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {openMessages.map((message) => (
-                <li
-                  key={message.id}
-                  className={`border-navy-100 bg-navy-50 px-4 py-3.5 ${cardStaticClass}`}
-                >
-                  <p className="text-meta font-medium text-navy-700">
-                    <span className="font-mono">
-                      {formatDate(message.createdAt)}
-                    </span>
-                    {" · "}
-                    {message.user.name}
-                  </p>
-                  <p className="mt-1.5 text-body whitespace-pre-wrap text-navy-900">
-                    {message.body}
-                  </p>
-                  <SignMessageButton messageId={message.id} />
-                </li>
-              ))}
-            </ul>
-          )}
+          <h2 className="text-heading text-navy-900">
+            {openMessages.length === 1
+              ? "Ny melding fra kunden"
+              : `${openMessages.length} nye meldinger fra kunden`}
+          </h2>
+          <ul className="flex flex-col gap-3">
+            {openMessages.map((message) => (
+              <li
+                key={message.id}
+                className={`border-navy-100 bg-navy-50 px-4 py-3.5 ${cardStaticClass}`}
+              >
+                <p className="text-meta font-medium text-navy-700">
+                  <span className="font-mono">
+                    {formatDate(message.createdAt)}
+                  </span>
+                  {" · "}
+                  {message.user.name}
+                </p>
+                <p className="mt-1.5 text-body whitespace-pre-wrap text-navy-900">
+                  {message.body}
+                </p>
+                <SignMessageButton messageId={message.id} />
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -290,54 +203,21 @@ export default async function CustomerPage({
       )}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-heading">Siste registreringer</h2>
-
-        {recent.length === 0 ? (
-          <p className={`px-4 py-5 text-body text-navy-700 ${cardStaticClass}`}>
-            Ingenting er registrert her ennå.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {recent.map((item) => (
-              <li key={item.key} className={`px-4 py-3.5 ${cardStaticClass}`}>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`rounded-full px-3 py-1 text-meta font-semibold ${badgeClasses[item.kind]}`}
-                  >
-                    {kindLabels[item.kind]}
-                  </span>
-                  <span className="font-mono text-meta font-medium text-navy-700">
-                    {formatDate(item.at)}
-                  </span>
-                  {item.hours !== null && (
-                    <span className="font-mono text-meta font-semibold text-navy-900">
-                      {formatHours(item.hours)} t
-                    </span>
-                  )}
-                </div>
-
-                <p className="mt-1.5 text-meta font-medium text-navy-700">
-                  {item.userName}
-                  {item.status && <> · {issueStatusLabels[item.status]}</>}
-                </p>
-
-                {item.text && (
-                  <p className="mt-2 text-body whitespace-pre-wrap text-navy-900">
-                    {item.text}
-                  </p>
-                )}
-
-                {item.tasks.length > 0 && (
-                  <p className="mt-2 text-body text-navy-900">
-                    {item.tasks.join(", ")}
-                  </p>
-                )}
-
-                <PhotoThumbs urls={item.photoUrls} />
-              </li>
-            ))}
-          </ul>
-        )}
+        <h2 className="text-heading">Siste aktivitet</h2>
+        <p className="text-meta text-navy-700">Siste 14 dager</p>
+        <ActivityList
+          items={recentActivity}
+          emptyText="Ingen registreringer de siste 14 dagene."
+        />
+        <Link
+          href={`/kunde/${customer.id}/aktivitet`}
+          className={`flex min-h-14 items-center justify-between rounded-md px-4 text-body font-semibold ${outlineActionClass}`}
+        >
+          Aktivitetsarkiv
+          <span aria-hidden className="text-display leading-none text-navy-100">
+            ›
+          </span>
+        </Link>
       </section>
     </div>
   );
