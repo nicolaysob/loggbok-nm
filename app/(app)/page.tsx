@@ -150,14 +150,14 @@ export default async function HomePage() {
         </p>
       </div>
 
-      <ul className="divide-y divide-line border-y border-line bg-white">
+      <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-white shadow-card">
         {sorted.map((customer) => {
           const tone = visitTone(customer.lastVisit);
           return (
             <li key={customer.id}>
               <Link
                 href={`/kunde/${customer.id}`}
-                className={`flex min-h-16 items-center gap-3 px-1 py-3.5 text-navy-900 transition-colors active:bg-navy-50 sm:px-2 ${
+                className={`flex min-h-16 items-center gap-3 px-4 py-3.5 text-navy-900 transition-colors active:bg-navy-50 ${
                   customer.openIssues > 0
                     ? "bg-red-50/40"
                     : customer.unreadMessages > 0

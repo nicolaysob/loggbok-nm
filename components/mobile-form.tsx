@@ -42,7 +42,7 @@ export function StickySubmit({
   children: React.ReactNode;
 }) {
   return (
-    <div className="sticky bottom-0 -mx-4 border-t border-line bg-[#f7f8fa] px-4 py-3">
+    <div className="sticky bottom-0 -mx-4 border-t border-line bg-page/85 px-4 py-3 backdrop-blur-md">
       <button
         type="submit"
         disabled={pending}

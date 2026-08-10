@@ -10,7 +10,7 @@ import { PhotoThumbs } from "@/components/photo-thumbs";
 
 function ActivityRow({ item }: { item: ActivityItem }) {
   return (
-    <li className="flex flex-col gap-1.5 py-3.5">
+    <li className="flex flex-col gap-1.5 px-4 py-3.5">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
         <span
           className={`text-meta font-semibold ${activityKindTone[item.kind]}`}
@@ -70,7 +70,7 @@ export function ActivityList({
 
   if (!useMonthGroups) {
     return (
-      <ul className="divide-y divide-line border-y border-line">
+      <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-white shadow-card">
         {items.map((item) => (
           <ActivityRow key={item.key} item={item} />
         ))}
@@ -85,7 +85,7 @@ export function ActivityList({
       {groups.map((group) => (
         <section key={group.key} className="flex flex-col gap-2">
           <h2 className="text-heading text-navy-900">{group.label}</h2>
-          <ul className="divide-y divide-line border-y border-line">
+          <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-white shadow-card">
             {group.items.map((item) => (
               <ActivityRow key={item.key} item={item} />
             ))}

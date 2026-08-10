@@ -2,22 +2,26 @@
 // server- og klientkomponenter.
 
 export const cardClass =
-  "rounded-md border border-line bg-white " +
-  "transition-colors duration-100 active:bg-navy-50";
+  "rounded-md border border-line bg-white shadow-card " +
+  "transition-colors duration-150 active:bg-navy-50";
 
-export const cardStaticClass = "rounded-md border border-line bg-white";
+export const cardStaticClass =
+  "rounded-md border border-line bg-white shadow-card";
 
 export const solidActionClass =
-  "bg-brand text-white transition-colors " +
-  "active:bg-brand-dark disabled:opacity-50";
+  "bg-brand text-white shadow-brand transition-all duration-150 " +
+  "hover:bg-brand-dark active:bg-brand-dark active:shadow-card " +
+  "disabled:opacity-50 disabled:shadow-none";
 
 export const outlineActionClass =
-  "border border-line bg-white text-navy-900 " +
-  "transition-colors active:bg-navy-50 disabled:opacity-50";
+  "border border-line bg-white text-navy-900 shadow-card " +
+  "transition-all duration-150 hover:border-line-strong " +
+  "active:bg-navy-50 disabled:opacity-50";
 
 export const textareaClass =
   "w-full rounded-md border border-line bg-white px-3.5 py-3 " +
-  "text-body text-navy-900 outline-none " +
+  "text-body text-navy-900 shadow-card outline-none " +
+  "transition-[border-color,box-shadow] duration-150 " +
   "focus:border-brand focus:ring-2 focus:ring-brand/25";
 
 export const labelClass = "text-meta font-semibold text-navy-900";
@@ -34,5 +38,6 @@ export const noticeClass =
 
 export const inputClass =
   "w-full rounded-md border border-line bg-white px-3 py-2.5 " +
-  "text-body text-navy-900 outline-none " +
+  "text-body text-navy-900 shadow-card outline-none " +
+  "transition-[border-color,box-shadow] duration-150 " +
   "focus:border-brand focus:ring-2 focus:ring-brand/25";

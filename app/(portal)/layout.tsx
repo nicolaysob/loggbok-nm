@@ -13,7 +13,7 @@ export default async function PortalLayout({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="sticky top-0 z-30 border-b border-line bg-white">
+      <header className="sticky top-0 z-30 border-b border-line bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-3 px-4">
           <Link
             href="/portal"

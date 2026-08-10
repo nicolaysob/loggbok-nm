@@ -50,7 +50,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="sticky top-0 z-30 border-b border-line bg-white">
+      <header className="sticky top-0 z-30 border-b border-line bg-white/85 backdrop-blur-xl">
         <div className="relative mx-auto w-full max-w-5xl">
           <div className="flex h-14 items-center justify-between gap-3 px-4 sm:hidden">
             <Link

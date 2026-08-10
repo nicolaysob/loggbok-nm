@@ -66,9 +66,9 @@ export default async function MessageArchivePage({
             Ingen signerte meldinger denne måneden.
           </p>
         ) : (
-          <ul className="divide-y divide-line border-y border-line">
+          <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-white shadow-card">
             {messages.map((message) => (
-              <li key={message.id} className="flex flex-col gap-1 py-3.5">
+              <li key={message.id} className="flex flex-col gap-1 px-4 py-3.5">
                 <p className="text-meta font-medium text-navy-700">
                   <span className="font-mono">
                     {formatDate(message.createdAt)}

@@ -59,9 +59,9 @@ export default async function CustomerPortalPage() {
             <h2 className="text-meta font-semibold text-navy-900">
               Venter på oppfølging
             </h2>
-            <ul className="divide-y divide-line border-y border-line">
+            <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-white shadow-card">
               {openMessages.map((message) => (
-                <li key={message.id} className="flex flex-col gap-1 py-3">
+                <li key={message.id} className="flex flex-col gap-1 px-4 py-3">
                   <span className="font-mono text-meta font-medium text-navy-700">
                     {formatDate(message.createdAt)}
                   </span>
