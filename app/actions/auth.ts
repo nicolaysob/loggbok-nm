@@ -37,7 +37,7 @@ export async function login(
   }
 
   await createSession(user.id);
-  redirect("/");
+  redirect(user.role === "CUSTOMER" ? "/portal" : "/");
 }
 
 export async function logout() {

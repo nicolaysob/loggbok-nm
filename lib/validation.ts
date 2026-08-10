@@ -98,24 +98,43 @@ export const customerJobSchema = z
     }
   });
 
-export const createUserSchema = z.object({
-  name: z.string().trim().min(1, { error: "Navn må fylles ut" }),
-  username: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(2, { error: "Brukernavn må ha minst 2 tegn" })
-    .max(32, { error: "Brukernavn er for langt" })
-    .regex(/^[a-z0-9._-]+$/, {
-      error: "Bare små bokstaver, tall, punktum, - og _",
-    }),
-  password: z
-    .string()
-    .min(4, { error: "Passord må ha minst 4 tegn" })
-    .max(72, { error: "Passord er for langt" }),
-  role: z.enum(Role, { error: "Velg rolle" }),
-  payType: z.enum(PayType, { error: "Velg lønnstype" }),
-});
+export const createUserSchema = z
+  .object({
+    name: z.string().trim().min(1, { error: "Navn må fylles ut" }),
+    username: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(2, { error: "Brukernavn må ha minst 2 tegn" })
+      .max(32, { error: "Brukernavn er for langt" })
+      .regex(/^[a-z0-9._-]+$/, {
+        error: "Bare små bokstaver, tall, punktum, - og _",
+      }),
+    password: z
+      .string()
+      .min(4, { error: "Passord må ha minst 4 tegn" })
+      .max(72, { error: "Passord er for langt" }),
+    role: z.enum(Role, { error: "Velg rolle" }),
+    payType: z.enum(PayType, { error: "Velg lønnstype" }).optional(),
+    customerId: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.role === "CUSTOMER") {
+      if (!value.customerId) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["customerId"],
+          message: "Velg kunde for kundekonto",
+        });
+      }
+    } else if (!value.payType) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["payType"],
+        message: "Velg lønnstype",
+      });
+    }
+  });
 
 export const resetPasswordSchema = z.object({
   password: z

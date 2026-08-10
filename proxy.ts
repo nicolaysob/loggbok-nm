@@ -13,6 +13,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.nextUrl));
   }
 
+  // Destinasjon etter innlogging styres i login-action (ansatt → /, kunde → /portal)
   if (session && isLoginPage) {
     return NextResponse.redirect(new URL("/", request.nextUrl));
   }

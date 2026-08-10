@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 import { getCurrentUser } from "@/lib/dal";
 import { BrandIcon } from "@/components/brand";
@@ -10,6 +11,8 @@ const desktopLinkClass =
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const user = await getCurrentUser();
+  if (user?.role === "CUSTOMER") redirect("/portal");
+
   const isAdmin = user?.role === "ADMIN";
 
   const groups: AppNavGroup[] = [

@@ -41,6 +41,7 @@ enum IssueStatus {
 enum Role {
   ADMIN
   EMPLOYEE
+  CUSTOMER
 }
 
 // Lønnstype — timesbetalte får timeliste
@@ -71,6 +72,7 @@ model Customer {
   active        Boolean      @default(true)
 
   areas Area[]
+  portalUsers User[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -191,15 +193,18 @@ model Issue {
 }
 
 model User {
-  id           String @id @default(cuid())
-  username     String @unique
+  id           String  @id @default(cuid())
+  username     String  @unique
   name         String
   email        String? @unique
   passwordHash String
   role         Role    @default(EMPLOYEE)
   active       Boolean @default(true)
   payType      PayType @default(FIXED)
+  // Kun for CUSTOMER — hvilken kundeportalen viser
+  customerId   String?
 
+  customer       Customer?       @relation(fields: [customerId], references: [id], onDelete: Restrict)
   logEntries     LogEntry[]
   issues         Issue[]
   jobCompletions JobCompletion[]
@@ -207,6 +212,8 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([customerId])
 }
 
 // Lønnstimer — ansattes egne timer til utbetaling (ikke fakturerbart ekstraarbeid)

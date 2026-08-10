@@ -37,6 +37,7 @@ export const issueStatusLabels: Record<IssueStatus, string> = {
 export const roleLabels: Record<Role, string> = {
   ADMIN: "Admin",
   EMPLOYEE: "Ansatt",
+  CUSTOMER: "Kunde",
 };
 
 export const payTypeLabels: Record<PayType, string> = {
@@ -90,6 +91,11 @@ export const jobScheduleOptions = Object.entries(jobScheduleLabels) as [
 ][];
 
 export const roleOptions = Object.entries(roleLabels) as [Role, string][];
+
+// Rollevalg for interne brukere (ikke kundekonto)
+export const staffRoleOptions = roleOptions.filter(
+  ([role]) => role === "ADMIN" || role === "EMPLOYEE",
+);
 
 export const payTypeOptions = Object.entries(payTypeLabels) as [
   PayType,

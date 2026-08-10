@@ -37,7 +37,8 @@ export async function createUser(
     username: formData.get("username"),
     password: formData.get("password"),
     role: formData.get("role"),
-    payType: formData.get("payType"),
+    payType: formData.get("payType") || undefined,
+    customerId: formData.get("customerId") || undefined,
   });
   if (!result.success) {
     return { errors: z.flattenError(result.error).fieldErrors };
@@ -51,6 +52,16 @@ export async function createUser(
     return { errors: { username: ["Brukernavnet er opptatt."] } };
   }
 
+  if (result.data.role === "CUSTOMER" && result.data.customerId) {
+    const customer = await db.customer.findUnique({
+      where: { id: result.data.customerId },
+      select: { id: true },
+    });
+    if (!customer) {
+      return { errors: { customerId: ["Ugyldig kunde."] } };
+    }
+  }
+
   const passwordHash = await hash(result.data.password, 10);
 
   await db.user.create({
@@ -59,7 +70,12 @@ export async function createUser(
       username: result.data.username,
       passwordHash,
       role: result.data.role,
-      payType: result.data.payType,
+      payType:
+        result.data.role === "CUSTOMER"
+          ? "FIXED"
+          : (result.data.payType as PayType),
+      customerId:
+        result.data.role === "CUSTOMER" ? result.data.customerId! : null,
       active: true,
     },
   });
@@ -70,6 +86,8 @@ export async function createUser(
 
 export async function setUserRole(userId: string, role: Role) {
   const admin = await requireAdmin();
+  if (role === "CUSTOMER") return;
+
   if (admin.id === userId && role !== "ADMIN") {
     const others = await adminCountExcluding(userId);
     if (others === 0) {
@@ -79,13 +97,19 @@ export async function setUserRole(userId: string, role: Role) {
 
   await db.user.update({
     where: { id: userId },
-    data: { role },
+    data: { role, customerId: null },
   });
   revalidateUsers();
 }
 
 export async function setUserPayType(userId: string, payType: PayType) {
   await requireAdmin();
+
+  const target = await db.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (!target || target.role === "CUSTOMER") return;
 
   await db.user.update({
     where: { id: userId },
@@ -116,6 +140,50 @@ export async function setUserActive(userId: string, active: boolean) {
     data: { active },
   });
   revalidateUsers();
+}
+
+export async function deleteUser(userId: string): Promise<FormState> {
+  const admin = await requireAdmin();
+  if (admin.id === userId) {
+    return { message: "Du kan ikke slette deg selv." };
+  }
+
+  const target = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      role: true,
+      _count: {
+        select: {
+          logEntries: true,
+          issues: true,
+          jobCompletions: true,
+        },
+      },
+    },
+  });
+  if (!target) return { message: "Brukeren finnes ikke." };
+
+  if (target.role === "ADMIN") {
+    const others = await adminCountExcluding(userId);
+    if (others === 0) {
+      return { message: "Kan ikke slette siste admin." };
+    }
+  }
+
+  if (
+    target._count.logEntries > 0 ||
+    target._count.issues > 0 ||
+    target._count.jobCompletions > 0
+  ) {
+    return {
+      message:
+        "Kan ikke slette — brukeren har loggføringer. Deaktiver i stedet.",
+    };
+  }
+
+  await db.user.delete({ where: { id: userId } });
+  revalidateUsers();
+  return { message: "Bruker slettet." };
 }
 
 export async function resetUserPassword(

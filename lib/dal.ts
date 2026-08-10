@@ -22,6 +22,7 @@ export const getCurrentUser = cache(async () => {
       role: true,
       payType: true,
       active: true,
+      customerId: true,
     },
   });
   if (!user?.active) return null;
@@ -32,6 +33,7 @@ export const getCurrentUser = cache(async () => {
     email: user.email,
     role: user.role,
     payType: user.payType,
+    customerId: user.customerId,
   };
 });
 
@@ -43,9 +45,23 @@ export const requireUser = cache(async () => {
   return user;
 });
 
+// Interne brukere (admin/ansatt). Kundekontoer sendes til portalen.
+export const requireStaff = cache(async () => {
+  const user = await requireUser();
+  if (user.role === "CUSTOMER") redirect("/portal");
+  return user;
+});
+
+// Kundekonto med koblet kunde.
+export const requireCustomer = cache(async () => {
+  const user = await requireUser();
+  if (user.role !== "CUSTOMER" || !user.customerId) redirect("/");
+  return { ...user, customerId: user.customerId };
+});
+
 // Timesbetalte ansatte — fastlønn sendes til forsiden.
 export const requireHourlyUser = cache(async () => {
-  const user = await requireUser();
+  const user = await requireStaff();
   if (user.role === "ADMIN") redirect("/lonn");
   if (user.payType !== "HOURLY") redirect("/");
   return user;
@@ -54,7 +70,7 @@ export const requireHourlyUser = cache(async () => {
 // Administrasjonssidene. Ansatte sendes stille til forsiden — proxy.ts sjekker
 // bare om man er innlogget, ikke hvilken rolle man har.
 export const requireAdmin = cache(async () => {
-  const user = await requireUser();
+  const user = await requireStaff();
   if (user.role !== "ADMIN") redirect("/");
   return user;
 });
