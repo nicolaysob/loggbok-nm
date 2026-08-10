@@ -8,7 +8,7 @@ const createPrismaClient = () =>
 
 // Versjonsnøkkel — økes når schema får nye modeller, så hot reload ikke
 // gjenbruker en gammel klient uten f.eks. customerJob.
-const PRISMA_VERSION = "customer-portal-2";
+const PRISMA_VERSION = "customer-message-read-2";
 
 const globalForPrisma = globalThis as unknown as {
   prismaVersion?: string;
@@ -31,4 +31,12 @@ function getDb() {
   return client;
 }
 
-export const db = getDb();
+// Proxy slik at hver tilgang går via getDb() — unngår at HMR holder
+// på en gammel klientreferanse etter schema-endring.
+export const db = new Proxy({} as ReturnType<typeof createPrismaClient>, {
+  get(_target, prop, receiver) {
+    const client = getDb();
+    const value = Reflect.get(client, prop, receiver);
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});

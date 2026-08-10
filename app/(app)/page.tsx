@@ -59,6 +59,11 @@ export default async function HomePage() {
           },
         },
       },
+      _count: {
+        select: {
+          messages: { where: { readAt: null } },
+        },
+      },
     },
   });
 
@@ -77,19 +82,26 @@ export default async function HomePage() {
         id: customer.id,
         name: customer.name,
         openIssues,
+        unreadMessages: customer._count.messages,
         lastVisit:
           visits.length === 0
             ? null
             : new Date(Math.max(...visits.map((date) => date.getTime()))),
       };
     })
-    // Åpne avvik øverst, deretter eldste besøk
+    // Avvik øverst, deretter uleste meldinger, deretter eldste besøk
     .sort((a, b) => {
       if (a.openIssues > 0 !== b.openIssues > 0) {
         return a.openIssues > 0 ? -1 : 1;
       }
       if (b.openIssues !== a.openIssues) {
         return b.openIssues - a.openIssues;
+      }
+      if (a.unreadMessages > 0 !== b.unreadMessages > 0) {
+        return a.unreadMessages > 0 ? -1 : 1;
+      }
+      if (b.unreadMessages !== a.unreadMessages) {
+        return b.unreadMessages - a.unreadMessages;
       }
       if (!a.lastVisit && !b.lastVisit) {
         return a.name.localeCompare(b.name, "nb-NO");
@@ -101,6 +113,7 @@ export default async function HomePage() {
 
   const firstName = user.name.split(/\s+/)[0] ?? user.name;
   const totalOpen = sorted.reduce((sum, row) => sum + row.openIssues, 0);
+  const totalUnread = sorted.reduce((sum, row) => sum + row.unreadMessages, 0);
 
   if (sorted.length === 0) {
     return (
@@ -131,7 +144,9 @@ export default async function HomePage() {
           Trykk på en kunde for å loggføre.
           {totalOpen > 0
             ? ` ${totalOpen} åpne avvik står øverst.`
-            : " De som har ventet lengst står øverst."}
+            : totalUnread > 0
+              ? ` ${totalUnread === 1 ? "1 ulest melding" : `${totalUnread} uleste meldinger`} står øverst.`
+              : " De som har ventet lengst står øverst."}
         </p>
       </div>
 
@@ -143,7 +158,11 @@ export default async function HomePage() {
               <Link
                 href={`/kunde/${customer.id}`}
                 className={`flex min-h-16 items-center gap-3 px-1 py-3.5 text-navy-900 transition-colors active:bg-navy-50 sm:px-2 ${
-                  customer.openIssues > 0 ? "bg-red-50/40" : ""
+                  customer.openIssues > 0
+                    ? "bg-red-50/40"
+                    : customer.unreadMessages > 0
+                      ? "bg-navy-50/70"
+                      : ""
                 }`}
               >
                 <span className="min-w-0 flex-1 truncate text-heading">
@@ -154,6 +173,13 @@ export default async function HomePage() {
                     {customer.openIssues === 1
                       ? "1 avvik"
                       : `${customer.openIssues} avvik`}
+                  </span>
+                )}
+                {customer.unreadMessages > 0 && (
+                  <span className="shrink-0 text-meta font-semibold text-navy-900">
+                    {customer.unreadMessages === 1
+                      ? "1 melding"
+                      : `${customer.unreadMessages} meldinger`}
                   </span>
                 )}
                 <span

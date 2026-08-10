@@ -4,21 +4,21 @@ import { requireCustomer } from "@/lib/dal";
 import { decimalToNumber, formatHours } from "@/lib/format";
 import { issueStatusLabels, logTypeLabels } from "@/lib/labels";
 import { formatDate } from "@/lib/time";
-import { cardStaticClass } from "@/lib/ui";
 import { PhotoThumbs } from "@/components/photo-thumbs";
+import { PortalMessageForm } from "./message-form";
 
 type EntryKind = LogType | "ISSUE";
-
-const badgeClasses: Record<EntryKind, string> = {
-  VISIT_NOTE: "bg-navy-100 text-navy-900",
-  TASK_COMPLETION: "bg-green-50 text-green-700",
-  EXTRA_WORK: "bg-navy-50 text-navy-900",
-  ISSUE: "bg-red-50 text-red-700",
-};
 
 const kindLabels: Record<EntryKind, string> = {
   ...logTypeLabels,
   ISSUE: "Avvik",
+};
+
+const kindTone: Record<EntryKind, string> = {
+  VISIT_NOTE: "text-navy-900",
+  TASK_COMPLETION: "text-green-700",
+  EXTRA_WORK: "text-navy-900",
+  ISSUE: "text-red-700",
 };
 
 export default async function CustomerPortalPage() {
@@ -37,7 +37,7 @@ export default async function CustomerPortalPage() {
     );
   }
 
-  const [logEntries, issues] = await Promise.all([
+  const [logEntries, issues, messages] = await Promise.all([
     db.logEntry.findMany({
       where: { area: { customerId: customer.id } },
       orderBy: { occurredAt: "desc" },
@@ -68,6 +68,16 @@ export default async function CustomerPortalPage() {
         photos: { select: { url: true }, take: 3 },
       },
     }),
+    db.customerMessage.findMany({
+      where: { customerId: customer.id },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        body: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
   const items = [
@@ -96,68 +106,91 @@ export default async function CustomerPortalPage() {
   ].sort((a, b) => b.at.getTime() - a.at.getTime());
 
   return (
-    <div className="flex animate-rise flex-col gap-6">
+    <div className="flex animate-rise flex-col gap-8">
       <div className="flex flex-col gap-1">
-        <p className="text-meta font-medium text-navy-700">Din logg</p>
         <h1 className="text-display tracking-tight text-navy-900">
           {customer.name}
         </h1>
-        <p className="text-body text-navy-700">
-          Her ser du besøk, oppgaver, ekstraarbeid og avvik som er registrert
-          hos dere.
-        </p>
+        <p className="text-body text-navy-700">Besøk og meldinger hos dere.</p>
       </div>
 
-      {items.length === 0 ? (
-        <p className={`px-4 py-5 text-body text-navy-700 ${cardStaticClass}`}>
-          Ingen registreringer ennå.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {items.map((item) => (
-            <li key={item.key} className={`px-4 py-3.5 ${cardStaticClass}`}>
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`rounded-full px-3 py-1 text-meta font-semibold ${badgeClasses[item.kind]}`}
-                >
-                  {kindLabels[item.kind]}
-                </span>
-                <span className="font-mono text-meta font-medium text-navy-700">
-                  {formatDate(item.at)}
-                </span>
-                {item.hours !== null && (
-                  <span className="font-mono text-meta font-semibold text-navy-900">
-                    {formatHours(item.hours)} t
+      <section className="flex flex-col gap-4">
+        <PortalMessageForm />
+        {messages.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <h2 className="text-meta font-semibold text-navy-900">
+              Dine meldinger
+            </h2>
+            <ul className="divide-y divide-line border-y border-line">
+              {messages.map((message) => (
+                <li key={message.id} className="flex flex-col gap-1 py-3">
+                  <span className="font-mono text-meta font-medium text-navy-700">
+                    {formatDate(message.createdAt)}
                   </span>
-                )}
-              </div>
+                  <p className="text-body whitespace-pre-wrap text-navy-900">
+                    {message.body}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
 
-              <p className="mt-1.5 text-meta font-medium text-navy-700">
-                {item.userName}
-                {item.status && <> · {issueStatusLabels[item.status]}</>}
-              </p>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-heading text-navy-900">Siste aktivitet</h2>
 
-              {item.text && (
-                <p className="mt-2 text-body whitespace-pre-wrap text-navy-900">
-                  {item.text}
-                </p>
-              )}
-
-              {item.tasks.length > 0 && (
-                <p className="mt-2 text-body text-navy-900">
-                  {item.tasks.join(", ")}
-                </p>
-              )}
-
-              {item.photoUrls.length > 0 && (
-                <div className="mt-3">
-                  <PhotoThumbs urls={item.photoUrls} />
+        {items.length === 0 ? (
+          <p className="border-y border-line py-5 text-body text-navy-700">
+            Ingen registreringer ennå.
+          </p>
+        ) : (
+          <ul className="divide-y divide-line border-y border-line">
+            {items.map((item) => (
+              <li key={item.key} className="flex flex-col gap-1.5 py-3.5">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span
+                    className={`text-meta font-semibold ${kindTone[item.kind]}`}
+                  >
+                    {kindLabels[item.kind]}
+                  </span>
+                  <span className="font-mono text-meta font-medium text-navy-700">
+                    {formatDate(item.at)}
+                  </span>
+                  {item.hours !== null && (
+                    <span className="font-mono text-meta font-semibold text-navy-900">
+                      {formatHours(item.hours)} t
+                    </span>
+                  )}
                 </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+
+                <p className="text-meta font-medium text-navy-700">
+                  {item.userName}
+                  {item.status && <> · {issueStatusLabels[item.status]}</>}
+                </p>
+
+                {item.text && (
+                  <p className="text-body whitespace-pre-wrap text-navy-900">
+                    {item.text}
+                  </p>
+                )}
+
+                {item.tasks.length > 0 && (
+                  <p className="text-body text-navy-900">
+                    {item.tasks.join(", ")}
+                  </p>
+                )}
+
+                {item.photoUrls.length > 0 && (
+                  <div className="pt-1">
+                    <PhotoThumbs urls={item.photoUrls} />
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

@@ -40,15 +40,40 @@ export function UsersManager({
   users: UserRow[];
   customers: CustomerOption[];
 }) {
+  const staff = users.filter((user) => user.role !== "CUSTOMER");
+  const customerUsers = users.filter((user) => user.role === "CUSTOMER");
+
   return (
     <div className="flex flex-col gap-8">
       <CreateUserForm customers={customers} />
 
-      <ul className="flex flex-col gap-3">
-        {users.map((user) => (
-          <UserCard key={user.id} user={user} />
-        ))}
-      </ul>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-heading text-navy-900">Ansatte</h2>
+        {staff.length === 0 ? (
+          <p className="text-body text-navy-700">Ingen ansatte ennå.</p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {staff.map((user) => (
+              <UserCard key={user.id} user={user} />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-heading text-navy-900">Kunder</h2>
+        {customerUsers.length === 0 ? (
+          <p className="text-body text-navy-700">
+            Ingen kundekontoer ennå. Opprett med rolle «Kunde».
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {customerUsers.map((user) => (
+              <UserCard key={user.id} user={user} />
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

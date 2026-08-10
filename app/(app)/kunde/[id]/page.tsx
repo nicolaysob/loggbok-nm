@@ -85,7 +85,7 @@ export default async function CustomerPage({
 
   if (!customer) notFound();
 
-  const [logEntries, issues, openIssues] = await Promise.all([
+  const [logEntries, issues, openIssues, unreadMessages] = await Promise.all([
     db.logEntry.findMany({
       where: { area: { customerId: id } },
       orderBy: { occurredAt: "desc" },
@@ -131,7 +131,25 @@ export default async function CustomerPage({
         photos: { select: { url: true }, take: 3 },
       },
     }),
+    db.customerMessage.findMany({
+      where: { customerId: id, readAt: null },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        body: true,
+        createdAt: true,
+        user: { select: { name: true } },
+      },
+    }),
   ]);
+
+  // Varsel forsvinner fra hjemlista når kortet er åpnet
+  if (unreadMessages.length > 0) {
+    await db.customerMessage.updateMany({
+      where: { customerId: id, readAt: null },
+      data: { readAt: new Date() },
+    });
+  }
 
   const recent: TimelineItem[] = [
     ...logEntries.map((entry) => ({
@@ -179,30 +197,6 @@ export default async function CustomerPage({
         <p className="text-body text-navy-700">Hva skal registreres?</p>
       </div>
 
-      {openIssues.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-heading text-red-700">Åpne avvik</h2>
-            <Link
-              href={`/kunde/${customer.id}/avvik`}
-              className="text-meta font-semibold text-red-700 underline"
-            >
-              Se alle
-            </Link>
-          </div>
-          <IssueList
-            issues={openIssues.map((issue) => ({
-              id: issue.id,
-              description: issue.description,
-              status: issue.status,
-              created: formatDate(issue.createdAt),
-              reportedBy: issue.user.name,
-              photoUrls: issue.photos.map((photo) => photo.url),
-            }))}
-          />
-        </section>
-      )}
-
       <div className="flex flex-col gap-3">
         {actions.map((action) => (
           <Link
@@ -233,6 +227,56 @@ export default async function CustomerPage({
           </Link>
         ))}
       </div>
+
+      {unreadMessages.length > 0 && (
+        <section
+          className={`flex flex-col gap-3 border-navy-100 bg-navy-50 px-4 py-4 ${cardStaticClass}`}
+        >
+          <h2 className="text-heading text-navy-900">
+            {unreadMessages.length === 1
+              ? "Ny melding fra kunden"
+              : `${unreadMessages.length} nye meldinger fra kunden`}
+          </h2>
+          <ul className="flex flex-col gap-3">
+            {unreadMessages.map((message) => (
+              <li key={message.id} className="flex flex-col gap-1">
+                <p className="text-meta font-medium text-navy-700">
+                  <span className="font-mono">{formatDate(message.createdAt)}</span>
+                  {" · "}
+                  {message.user.name}
+                </p>
+                <p className="text-body whitespace-pre-wrap text-navy-900">
+                  {message.body}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {openIssues.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-heading text-red-700">Åpne avvik</h2>
+            <Link
+              href={`/kunde/${customer.id}/avvik`}
+              className="text-meta font-semibold text-red-700 underline"
+            >
+              Se alle
+            </Link>
+          </div>
+          <IssueList
+            issues={openIssues.map((issue) => ({
+              id: issue.id,
+              description: issue.description,
+              status: issue.status,
+              created: formatDate(issue.createdAt),
+              reportedBy: issue.user.name,
+              photoUrls: issue.photos.map((photo) => photo.url),
+            }))}
+          />
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-heading">Siste registreringer</h2>

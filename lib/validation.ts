@@ -143,6 +143,14 @@ export const resetPasswordSchema = z.object({
     .max(72, { error: "Passord er for langt" }),
 });
 
+export const customerMessageSchema = z.object({
+  body: z
+    .string()
+    .trim()
+    .min(1, { error: "Skriv en melding" })
+    .max(2000, { error: "Meldingen er for lang" }),
+});
+
 export const timeEntrySchema = z.object({
   workedOn: z
     .string()
