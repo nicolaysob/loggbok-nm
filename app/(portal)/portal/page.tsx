@@ -76,6 +76,8 @@ export default async function CustomerPortalPage() {
         id: true,
         body: true,
         createdAt: true,
+        readAt: true,
+        signedBy: { select: { name: true } },
       },
     }),
   ]);
@@ -130,6 +132,16 @@ export default async function CustomerPortalPage() {
                   <p className="text-body whitespace-pre-wrap text-navy-900">
                     {message.body}
                   </p>
+                  {message.readAt && message.signedBy ? (
+                    <p className="text-meta font-medium text-green-700">
+                      Signert av {message.signedBy.name} ·{" "}
+                      {formatDate(message.readAt)}
+                    </p>
+                  ) : (
+                    <p className="text-meta font-medium text-navy-700">
+                      Mottatt — venter på oppfølging
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>

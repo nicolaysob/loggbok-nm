@@ -14,6 +14,7 @@ import {
 } from "@/lib/ui";
 import { PhotoThumbs } from "@/components/photo-thumbs";
 import { IssueList } from "./avvik/issue-list";
+import { SignMessageButton } from "./sign-message-button";
 
 const RECENT_COUNT = 5;
 
@@ -68,6 +69,12 @@ const actions = [
     hint: "Feil og mangler",
     primary: false,
   },
+  {
+    href: "meldingsarkiv",
+    title: "Meldingsarkiv",
+    hint: "Signerte meldinger fra kunden",
+    primary: false,
+  },
 ] as const;
 
 export default async function CustomerPage({
@@ -85,71 +92,69 @@ export default async function CustomerPage({
 
   if (!customer) notFound();
 
-  const [logEntries, issues, openIssues, unreadMessages] = await Promise.all([
-    db.logEntry.findMany({
-      where: { area: { customerId: id } },
-      orderBy: { occurredAt: "desc" },
-      take: RECENT_COUNT,
-      select: {
-        id: true,
-        type: true,
-        occurredAt: true,
-        hours: true,
-        comment: true,
-        user: { select: { name: true } },
-        completedTasks: {
-          select: { taskTemplate: { select: { title: true } } },
+  const [logEntries, issues, openIssues, openMessages, messageCount] =
+    await Promise.all([
+      db.logEntry.findMany({
+        where: { area: { customerId: id } },
+        orderBy: { occurredAt: "desc" },
+        take: RECENT_COUNT,
+        select: {
+          id: true,
+          type: true,
+          occurredAt: true,
+          hours: true,
+          comment: true,
+          user: { select: { name: true } },
+          completedTasks: {
+            select: { taskTemplate: { select: { title: true } } },
+          },
+          photos: { select: { url: true }, take: 3 },
         },
-        photos: { select: { url: true }, take: 3 },
-      },
-    }),
-    db.issue.findMany({
-      where: { area: { customerId: id } },
-      orderBy: { createdAt: "desc" },
-      take: RECENT_COUNT,
-      select: {
-        id: true,
-        description: true,
-        status: true,
-        createdAt: true,
-        user: { select: { name: true } },
-        photos: { select: { url: true }, take: 3 },
-      },
-    }),
-    db.issue.findMany({
-      where: {
-        area: { customerId: id },
-        status: { in: ["OPEN", "IN_PROGRESS"] },
-      },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        description: true,
-        status: true,
-        createdAt: true,
-        user: { select: { name: true } },
-        photos: { select: { url: true }, take: 3 },
-      },
-    }),
-    db.customerMessage.findMany({
-      where: { customerId: id, readAt: null },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        body: true,
-        createdAt: true,
-        user: { select: { name: true } },
-      },
-    }),
-  ]);
+      }),
+      db.issue.findMany({
+        where: { area: { customerId: id } },
+        orderBy: { createdAt: "desc" },
+        take: RECENT_COUNT,
+        select: {
+          id: true,
+          description: true,
+          status: true,
+          createdAt: true,
+          user: { select: { name: true } },
+          photos: { select: { url: true }, take: 3 },
+        },
+      }),
+      db.issue.findMany({
+        where: {
+          area: { customerId: id },
+          status: { in: ["OPEN", "IN_PROGRESS"] },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          description: true,
+          status: true,
+          createdAt: true,
+          user: { select: { name: true } },
+          photos: { select: { url: true }, take: 3 },
+        },
+      }),
+      db.customerMessage.findMany({
+        where: { customerId: id, readAt: null },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          body: true,
+          createdAt: true,
+          user: { select: { name: true } },
+        },
+      }),
+      db.customerMessage.count({
+        where: { customerId: id },
+      }),
+    ]);
 
-  // Varsel forsvinner fra hjemlista når kortet er åpnet
-  if (unreadMessages.length > 0) {
-    await db.customerMessage.updateMany({
-      where: { customerId: id, readAt: null },
-      data: { readAt: new Date() },
-    });
-  }
+  const hasAnyMessages = messageCount > 0;
 
   const recent: TimelineItem[] = [
     ...logEntries.map((entry) => ({
@@ -228,29 +233,35 @@ export default async function CustomerPage({
         ))}
       </div>
 
-      {unreadMessages.length > 0 && (
-        <section
-          className={`flex flex-col gap-3 border-navy-100 bg-navy-50 px-4 py-4 ${cardStaticClass}`}
-        >
-          <h2 className="text-heading text-navy-900">
-            {unreadMessages.length === 1
-              ? "Ny melding fra kunden"
-              : `${unreadMessages.length} nye meldinger fra kunden`}
-          </h2>
-          <ul className="flex flex-col gap-3">
-            {unreadMessages.map((message) => (
-              <li key={message.id} className="flex flex-col gap-1">
-                <p className="text-meta font-medium text-navy-700">
-                  <span className="font-mono">{formatDate(message.createdAt)}</span>
-                  {" · "}
-                  {message.user.name}
-                </p>
-                <p className="text-body whitespace-pre-wrap text-navy-900">
-                  {message.body}
-                </p>
-              </li>
-            ))}
-          </ul>
+      {hasAnyMessages && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-heading text-navy-900">Meldinger fra kunden</h2>
+          {openMessages.length === 0 ? (
+            <p className={`px-4 py-4 text-body text-navy-700 ${cardStaticClass}`}>
+              Ingen nye meldinger
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {openMessages.map((message) => (
+                <li
+                  key={message.id}
+                  className={`border-navy-100 bg-navy-50 px-4 py-3.5 ${cardStaticClass}`}
+                >
+                  <p className="text-meta font-medium text-navy-700">
+                    <span className="font-mono">
+                      {formatDate(message.createdAt)}
+                    </span>
+                    {" · "}
+                    {message.user.name}
+                  </p>
+                  <p className="mt-1.5 text-body whitespace-pre-wrap text-navy-900">
+                    {message.body}
+                  </p>
+                  <SignMessageButton messageId={message.id} />
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
 

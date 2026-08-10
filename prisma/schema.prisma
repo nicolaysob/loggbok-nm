@@ -81,21 +81,24 @@ model Customer {
 
 // Melding fra kundeportalen til N&M
 model CustomerMessage {
-  id         String    @id @default(cuid())
-  customerId String
-  userId     String
-  body       String
-  // null = ulest av N&M
-  readAt     DateTime?
+  id             String    @id @default(cuid())
+  customerId     String
+  userId         String
+  body           String
+  // null = ikke signert / tatt hånd om ennå
+  readAt         DateTime?
+  signedByUserId String?
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User     @relation("CustomerMessageSender", fields: [userId], references: [id], onDelete: Cascade)
+  signedBy User?    @relation("CustomerMessageSigner", fields: [signedByUserId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
   @@index([customerId, createdAt])
   @@index([customerId, readAt])
   @@index([userId])
+  @@index([signedByUserId])
 }
 
 // Område — en kunde kan ha flere
@@ -229,7 +232,8 @@ model User {
   issues         Issue[]
   jobCompletions JobCompletion[]
   timeEntries    TimeEntry[]
-  messages       CustomerMessage[]
+  messages       CustomerMessage[] @relation("CustomerMessageSender")
+  signedMessages CustomerMessage[] @relation("CustomerMessageSigner")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -145,7 +145,7 @@ export default async function HomePage() {
           {totalOpen > 0
             ? ` ${totalOpen} åpne avvik står øverst.`
             : totalUnread > 0
-              ? ` ${totalUnread === 1 ? "1 ulest melding" : `${totalUnread} uleste meldinger`} står øverst.`
+              ? ` ${totalUnread === 1 ? "1 usignert melding" : `${totalUnread} usignerte meldinger`} står øverst.`
               : " De som har ventet lengst står øverst."}
         </p>
       </div>
