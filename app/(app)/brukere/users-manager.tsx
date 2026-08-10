@@ -48,7 +48,7 @@ function UserCard({ user }: { user: UserRow }) {
 
   return (
     <li
-      className={`rounded-2xl border border-line bg-white/95 shadow-soft ${
+      className={`rounded-md border border-line bg-white ${
         user.active ? "" : "opacity-70"
       }`}
     >
@@ -97,7 +97,7 @@ function UserCard({ user }: { user: UserRow }) {
                 <button
                   type="submit"
                   disabled={user.role === role}
-                  className={`min-h-12 rounded-xl px-4 text-meta font-semibold disabled:opacity-40 ${
+                  className={`min-h-12 rounded-md px-4 text-meta font-semibold disabled:opacity-40 ${
                     user.role === role ? solidActionClass : outlineActionClass
                   }`}
                 >
@@ -117,7 +117,7 @@ function UserCard({ user }: { user: UserRow }) {
                 <button
                   type="submit"
                   disabled={user.payType === payType}
-                  className={`min-h-12 rounded-xl px-4 text-meta font-semibold disabled:opacity-40 ${
+                  className={`min-h-12 rounded-md px-4 text-meta font-semibold disabled:opacity-40 ${
                     user.payType === payType
                       ? solidActionClass
                       : outlineActionClass
@@ -133,7 +133,7 @@ function UserCard({ user }: { user: UserRow }) {
             <form action={setUserActive.bind(null, user.id, !user.active)}>
               <button
                 type="submit"
-                className={`min-h-12 w-full rounded-xl px-4 text-meta font-semibold ${outlineActionClass}`}
+                className={`min-h-12 w-full rounded-md px-4 text-meta font-semibold ${outlineActionClass}`}
               >
                 {user.active ? "Deaktiver" : "Aktiver"}
               </button>
@@ -162,7 +162,7 @@ function CreateUserForm() {
     <form
       ref={formRef}
       action={formAction}
-      className="flex max-w-lg flex-col gap-3 rounded-2xl border border-line bg-white/95 p-4 shadow-soft"
+      className="flex max-w-lg flex-col gap-3 rounded-md border border-line bg-white p-4"
     >
       <p className="text-heading">Ny bruker</p>
 

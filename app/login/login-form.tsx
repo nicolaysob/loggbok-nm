@@ -2,13 +2,9 @@
 
 import { useActionState } from "react";
 import { login, type LoginState } from "@/app/actions/auth";
+import { inputClass, solidActionClass } from "@/lib/ui";
 
-// text-body er 17px — under 16px zoomer iOS inn ved fokus.
-// min-h-16 er 64px, samme trykkflate som resten av appen.
-const fieldClass =
-  "min-h-16 w-full rounded-2xl border border-line bg-white px-4 " +
-  "text-body text-navy-900 shadow-soft outline-none " +
-  "focus:border-navy-700 focus:ring-4 focus:ring-navy-900/15";
+const fieldClass = `${inputClass} min-h-14`;
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(
@@ -18,10 +14,10 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         <label
           htmlFor="username"
-          className="text-body font-semibold text-navy-900"
+          className="text-meta font-semibold text-navy-900"
         >
           Brukernavn
         </label>
@@ -37,10 +33,10 @@ export function LoginForm() {
         />
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         <label
           htmlFor="password"
-          className="text-body font-semibold text-navy-900"
+          className="text-meta font-semibold text-navy-900"
         >
           Passord
         </label>
@@ -55,7 +51,7 @@ export function LoginForm() {
       </div>
 
       {state?.error && (
-        <p role="alert" className="text-body font-semibold text-red-700">
+        <p role="alert" className="text-body font-medium text-red-700">
           {state.error}
         </p>
       )}
@@ -63,8 +59,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="min-h-16 w-full rounded-2xl bg-brand text-heading font-semibold
-                   text-white shadow-lift active:bg-brand-dark disabled:opacity-60"
+        className={`mt-1 min-h-14 w-full rounded-md text-body font-semibold ${solidActionClass}`}
       >
         {pending ? "Logger inn …" : "Logg inn"}
       </button>

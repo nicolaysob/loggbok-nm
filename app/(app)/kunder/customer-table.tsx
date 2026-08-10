@@ -14,7 +14,7 @@ export type CustomerRow = {
 
 export function CustomerTable({ customers }: { customers: CustomerRow[] }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-white/95 shadow-card">
+    <div className="overflow-hidden rounded-md border border-line bg-white">
       <table className="w-full border-collapse text-meta">
         <thead>
           <tr className="border-b border-line bg-navy-50/70 text-left">

@@ -74,7 +74,7 @@ export function IssueList({ issues }: { issues: IssueItem[] }) {
                 >
                   <button
                     type="submit"
-                    className={`min-h-14 rounded-2xl px-4 text-meta font-semibold ${
+                    className={`min-h-14 rounded-md px-4 text-meta font-semibold ${
                       status === "CLOSED"
                         ? "border border-green-700/30 bg-green-50 text-green-700 active:bg-green-50"
                         : outlineActionClass

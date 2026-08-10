@@ -44,9 +44,9 @@ export function CalendarBoard({
   jobTypes: CalendarOption[];
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-white/95 shadow-card">
-      <div className="border-b border-line bg-navy-50/80 px-4 py-3">
-        <p className="text-meta font-semibold text-navy-700">Ukeplan</p>
+    <div className="overflow-hidden rounded-md border border-line bg-white">
+      <div className="border-b border-line px-4 py-3">
+        <p className="text-meta font-medium text-navy-700">Uke</p>
         <p className="text-heading text-navy-900">{weekLabel}</p>
       </div>
 

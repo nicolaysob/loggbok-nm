@@ -61,7 +61,7 @@ function FolderCard({ folder }: { folder: PayrollFolder }) {
           {folder.rows.map((row) => (
             <li
               key={row.id}
-              className="flex flex-col gap-1 rounded-xl bg-navy-50/60 px-3 py-3"
+              className="flex flex-col gap-1 rounded-md bg-navy-50/60 px-3 py-3"
             >
               <div className="flex items-baseline justify-between gap-3">
                 <p className="text-body font-semibold text-navy-900">

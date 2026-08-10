@@ -47,44 +47,42 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="sticky top-0 z-30 border-b border-line/70 bg-white/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-line bg-white">
         <div className="relative mx-auto w-full max-w-5xl">
-          {/* Mobil: ren app-header — logo, tittel, meny */}
           <div className="flex h-14 items-center justify-between gap-3 px-4 sm:hidden">
             <Link
               href="/"
               className="flex min-w-0 items-center gap-2.5"
               aria-label="Loggbok hjem"
             >
-              <BrandIcon size={32} className="size-8" />
-              <span className="truncate text-heading tracking-tight text-navy-900">
+              <BrandIcon size={28} className="size-7" />
+              <span className="truncate text-[1.05rem] font-semibold tracking-tight text-navy-900">
                 Loggbok
               </span>
             </Link>
             <MobileNav groups={groups} />
           </div>
 
-          {/* Desktop */}
           <div className="hidden items-center justify-between gap-3 px-4 py-2.5 sm:flex">
             <Link
               href="/"
-              className="flex min-h-11 min-w-0 items-center gap-2"
+              className="flex min-h-11 min-w-0 items-center gap-2.5"
               aria-label="Loggbok hjem"
             >
-              <BrandIcon size={36} className="size-9" />
-              <span className="truncate text-meta font-medium text-navy-700">
+              <BrandIcon size={30} className="size-8" />
+              <span className="truncate text-meta font-semibold text-navy-900">
                 Loggbok
               </span>
             </Link>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="max-w-36 truncate text-meta font-medium text-navy-700">
+            <div className="flex shrink-0 items-center gap-3">
+              <span className="max-w-40 truncate text-meta text-navy-700">
                 {user?.name}
               </span>
               <form action={logout}>
                 <button
                   type="submit"
-                  className={`min-h-11 rounded-xl px-3 text-meta font-semibold ${outlineActionClass}`}
+                  className={`min-h-10 rounded-md px-3 text-meta font-medium ${outlineActionClass}`}
                 >
                   Logg ut
                 </button>
@@ -92,30 +90,23 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </div>
           </div>
 
-          <nav className="hidden flex-wrap items-center gap-x-5 gap-y-2 px-4 pb-3 sm:flex">
-            {groups.map((group, index) => (
-              <div
-                key={group.title ?? "main"}
-                className={`flex flex-wrap items-center gap-x-5 gap-y-2 ${
-                  index > 0 ? "border-l border-line pl-5" : ""
-                }`}
-              >
-                {group.links.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={desktopLinkClass}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            ))}
+          <nav className="hidden flex-wrap items-center gap-x-1 gap-y-1 border-t border-line px-3 py-1.5 sm:flex">
+            {groups.map((group) =>
+              group.links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`${desktopLinkClass} rounded-md px-2.5 py-1.5`}
+                >
+                  {link.label}
+                </Link>
+              )),
+            )}
           </nav>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5 sm:py-8">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">
         {children}
       </main>
     </div>

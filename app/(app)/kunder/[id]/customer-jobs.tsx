@@ -116,7 +116,7 @@ function NewCustomerJobForm({
     <form
       ref={formRef}
       action={formAction}
-      className="flex flex-col gap-3 rounded-2xl border border-line bg-white/95 p-4 shadow-soft"
+      className="flex flex-col gap-3 rounded-md border border-line bg-white p-4"
     >
       <p className="text-heading">Nytt oppdrag</p>
 

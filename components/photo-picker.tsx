@@ -16,7 +16,7 @@ export function PhotoPicker({
       <div className="flex flex-wrap items-center gap-3">
         <span
           aria-disabled="true"
-          className={`inline-flex min-h-16 cursor-not-allowed items-center justify-center rounded-2xl px-5 text-heading font-semibold opacity-50 ${outlineActionClass}`}
+          className={`inline-flex min-h-16 cursor-not-allowed items-center justify-center rounded-md px-5 text-heading font-semibold opacity-50 ${outlineActionClass}`}
         >
           Ta bilde
         </span>

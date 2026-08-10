@@ -2,7 +2,6 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { daysSince, formatLastVisit } from "@/lib/time";
-import { cardClass } from "@/lib/ui";
 
 function visitTone(lastVisit: Date | null): {
   label: string;
@@ -11,7 +10,7 @@ function visitTone(lastVisit: Date | null): {
   if (!lastVisit) {
     return {
       label: "Aldri",
-      className: "bg-amber-50 text-amber-700",
+      className: "text-amber-700",
     };
   }
 
@@ -19,19 +18,19 @@ function visitTone(lastVisit: Date | null): {
   if (days >= 14) {
     return {
       label: formatLastVisit(lastVisit),
-      className: "bg-amber-50 text-amber-700",
+      className: "text-amber-700",
     };
   }
   if (days <= 0) {
     return {
       label: "I dag",
-      className: "bg-green-50 text-green-700",
+      className: "text-green-700",
     };
   }
 
   return {
     label: formatLastVisit(lastVisit),
-    className: "bg-navy-50 text-navy-700",
+    className: "text-navy-700",
   };
 }
 
@@ -123,12 +122,11 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-lg animate-rise flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-lg animate-rise flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <p className="text-meta font-semibold tracking-wide text-navy-700 uppercase">
-          I dag
-        </p>
-        <h1 className="text-display tracking-tight">Hei, {firstName}</h1>
+        <h1 className="text-display tracking-tight text-navy-900">
+          Hei, {firstName}
+        </h1>
         <p className="text-body text-navy-700">
           Trykk på en kunde for å loggføre.
           {totalOpen > 0
@@ -137,36 +135,31 @@ export default async function HomePage() {
         </p>
       </div>
 
-      <ul className="flex flex-col gap-3">
+      <ul className="divide-y divide-line border-y border-line bg-white">
         {sorted.map((customer) => {
           const tone = visitTone(customer.lastVisit);
           return (
             <li key={customer.id}>
               <Link
                 href={`/kunde/${customer.id}`}
-                className={`flex min-h-16 items-center gap-3 px-4 py-3.5 text-navy-900 ${cardClass} ${
-                  customer.openIssues > 0
-                    ? "border-red-700/25 bg-red-50/40"
-                    : ""
+                className={`flex min-h-16 items-center gap-3 px-1 py-3.5 text-navy-900 transition-colors active:bg-navy-50 sm:px-2 ${
+                  customer.openIssues > 0 ? "bg-red-50/40" : ""
                 }`}
               >
                 <span className="min-w-0 flex-1 truncate text-heading">
                   {customer.name}
                 </span>
                 {customer.openIssues > 0 && (
-                  <span className="shrink-0 rounded-full bg-red-50 px-3 py-1 text-meta font-semibold text-red-700">
+                  <span className="shrink-0 text-meta font-semibold text-red-700">
                     {customer.openIssues === 1
                       ? "1 avvik"
                       : `${customer.openIssues} avvik`}
                   </span>
                 )}
                 <span
-                  className={`shrink-0 rounded-full px-3 py-1 font-mono text-meta font-semibold ${tone.className}`}
+                  className={`shrink-0 font-mono text-meta font-medium ${tone.className}`}
                 >
                   {tone.label}
-                </span>
-                <span aria-hidden className="text-heading text-navy-100">
-                  ›
                 </span>
               </Link>
             </li>

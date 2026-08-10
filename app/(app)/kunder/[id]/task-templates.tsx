@@ -19,7 +19,7 @@ export type TaskTemplateData = {
 };
 
 const iconButtonClass =
-  "rounded-lg border border-line bg-white px-2 py-2 text-meta shadow-soft hover:bg-navy-50 disabled:opacity-40";
+  "rounded-lg border border-line bg-white px-2 py-2 text-meta hover:bg-navy-50 disabled:opacity-40";
 
 function TaskTemplateRow({
   template,

@@ -49,7 +49,7 @@ export function LogForm({ customerId }: { customerId: string }) {
               key={preset}
               type="button"
               onClick={() => applyPreset(preset)}
-              className={`min-h-12 rounded-2xl px-4 text-meta font-semibold ${outlineActionClass}`}
+              className={`min-h-12 rounded-md px-4 text-meta font-semibold ${outlineActionClass}`}
             >
               {preset}
             </button>

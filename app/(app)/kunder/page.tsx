@@ -19,7 +19,7 @@ export default async function CustomersPage() {
         </div>
         <Link
           href="/kunder/ny"
-          className="rounded-xl bg-brand px-4 py-2.5 text-meta font-semibold text-white shadow-lift transition-colors hover:bg-brand-dark"
+          className="rounded-md bg-brand px-4 py-2.5 text-meta font-semibold text-white shadow-lift transition-colors hover:bg-brand-dark"
         >
           Ny kunde
         </Link>

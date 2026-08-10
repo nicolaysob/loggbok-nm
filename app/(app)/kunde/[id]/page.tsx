@@ -165,7 +165,7 @@ export default async function CustomerPage({
       {lagret && (
         <p
           role="status"
-          className="rounded-2xl border border-green-700/20 bg-green-50 px-4 py-3 text-body font-semibold text-green-700"
+          className="rounded-md border border-green-700/20 bg-green-50 px-4 py-3 text-body font-semibold text-green-700"
         >
           Registreringen er lagret.
         </p>
@@ -208,7 +208,7 @@ export default async function CustomerPage({
           <Link
             key={action.href}
             href={`/kunde/${customer.id}/${action.href}`}
-            className={`flex min-h-20 items-center justify-between gap-3 rounded-2xl px-5 py-4 ${
+            className={`flex min-h-20 items-center justify-between gap-3 rounded-md px-5 py-4 ${
               action.primary ? solidActionClass : outlineActionClass
             }`}
           >

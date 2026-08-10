@@ -33,8 +33,7 @@ export function Field({
 // Fylt er reservert sidens ene primærhandling. Alt annet er outline.
 const submitVariants = {
   solid: "bg-brand text-white hover:bg-brand-dark",
-  outline:
-    "border border-line bg-white text-navy-900 shadow-soft hover:bg-navy-50",
+  outline: "border border-line bg-white text-navy-900 hover:bg-navy-50",
 } as const;
 
 export function SubmitButton({
@@ -52,7 +51,7 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={pending}
-      className={`rounded-xl px-4 py-2 text-meta font-semibold disabled:opacity-60 ${submitVariants[variant]}`}
+      className={`rounded-md px-4 py-2 text-meta font-semibold disabled:opacity-60 ${submitVariants[variant]}`}
     >
       {pending ? pendingLabel : children}
     </button>

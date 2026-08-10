@@ -54,7 +54,7 @@ export default async function WeekPlanPage({
         <div className="flex flex-col gap-1">
           <h1 className="text-display tracking-tight">Ukeplan</h1>
           <p className="text-body text-navy-700">
-            Skriv uka fritt — AI lager forslag til kalenderen · {week.label}
+            Skriv uka fritt — få forslag til kalenderen · {week.label}
           </p>
         </div>
 

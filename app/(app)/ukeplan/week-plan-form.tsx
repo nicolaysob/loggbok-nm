@@ -93,8 +93,8 @@ export function WeekPlanForm({
   return (
     <div className="flex flex-col gap-6">
       <p className={noticeClass}>
-        Skriv fritt hva som skal gjøres i {weekLabel}. AI tolker teksten til
-        forslag — du retter og legger dem i kalenderen.
+        Skriv fritt hva som skal gjøres i {weekLabel}. Du får forslag som du
+        kan rette før de legges i kalenderen.
       </p>
 
       <section className="flex flex-col gap-3">
@@ -115,9 +115,9 @@ export function WeekPlanForm({
           type="button"
           disabled={pending || text.trim().length === 0}
           onClick={onParse}
-          className={`min-h-14 rounded-2xl px-4 text-body font-semibold ${solidActionClass}`}
+          className={`min-h-14 rounded-md px-4 text-body font-semibold ${solidActionClass}`}
         >
-          {pending && drafts.length === 0 ? "Tolker …" : "Tolke med AI"}
+          {pending && drafts.length === 0 ? "Lager forslag …" : "Lag forslag"}
         </button>
       </section>
 
@@ -139,7 +139,7 @@ export function WeekPlanForm({
             {drafts.map((item) => (
               <li
                 key={item.key}
-                className="flex flex-col gap-3 rounded-2xl border border-line bg-white/95 p-4 shadow-soft"
+                className="flex flex-col gap-3 rounded-md border border-line bg-white p-4"
               >
                 <label className="flex min-h-12 items-center gap-3 text-body font-semibold text-navy-900">
                   <input
@@ -208,7 +208,7 @@ export function WeekPlanForm({
                   >
                     <option value="">
                       {item.customerHint
-                        ? `Velg kunde (AI: ${item.customerHint})`
+                        ? `Velg kunde (forslag: ${item.customerHint})`
                         : "Velg kunde"}
                     </option>
                     {customers.map((customer) => (
@@ -246,7 +246,7 @@ export function WeekPlanForm({
             type="button"
             disabled={pending || includedCount === 0}
             onClick={onConfirm}
-            className={`min-h-16 rounded-2xl px-4 text-heading font-semibold ${solidActionClass}`}
+            className={`min-h-16 rounded-md px-4 text-heading font-semibold ${solidActionClass}`}
           >
             {pending ? "Lagrer …" : `Legg ${includedCount} i kalender`}
           </button>
@@ -254,7 +254,7 @@ export function WeekPlanForm({
             type="button"
             disabled={pending}
             onClick={() => setDrafts([])}
-            className={`min-h-12 rounded-xl px-4 text-meta font-semibold ${outlineActionClass}`}
+            className={`min-h-12 rounded-md px-4 text-meta font-semibold ${outlineActionClass}`}
           >
             Forkast forslag
           </button>

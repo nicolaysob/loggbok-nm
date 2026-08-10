@@ -16,7 +16,7 @@ function friendlyGeminiError(message: string): string {
     lower.includes("rate limit") ||
     lower.includes("resource_exhausted")
   ) {
-    return "AI-kvoten er brukt opp for nå. Vent et minutt og prøv igjen, eller sjekk gratisgrensen i Google AI Studio.";
+    return "Kvoten er brukt opp for nå. Vent et minutt og prøv igjen.";
   }
   return message;
 }

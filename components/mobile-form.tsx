@@ -14,8 +14,8 @@ export {
 } from "@/lib/ui";
 
 const stepButtonClass =
-  "flex size-16 shrink-0 items-center justify-center rounded-2xl border " +
-  "border-line bg-white text-display text-navy-900 shadow-soft " +
+  "flex size-14 shrink-0 items-center justify-center rounded-md border " +
+  "border-line bg-white text-display text-navy-900 " +
   "active:bg-navy-50 disabled:opacity-40";
 
 export function FieldError({ messages }: { messages?: string[] }) {
@@ -25,7 +25,7 @@ export function FieldError({ messages }: { messages?: string[] }) {
         <p
           key={message}
           role="alert"
-          className="text-body font-semibold text-red-700"
+          className="text-body font-medium text-red-700"
         >
           {message}
         </p>
@@ -42,12 +42,11 @@ export function StickySubmit({
   children: React.ReactNode;
 }) {
   return (
-    // Festet til bunnen så knappen alltid er innen rekkevidde for tommelen
-    <div className="sticky bottom-0 -mx-4 border-t border-line bg-navy-50/95 px-4 py-3 backdrop-blur-sm">
+    <div className="sticky bottom-0 -mx-4 border-t border-line bg-[#f7f8fa] px-4 py-3">
       <button
         type="submit"
         disabled={pending}
-        className={`min-h-16 w-full rounded-2xl text-heading font-semibold ${solidActionClass}`}
+        className={`min-h-14 w-full rounded-md text-body font-semibold ${solidActionClass}`}
       >
         {pending ? "Lagrer …" : children}
       </button>
@@ -69,7 +68,7 @@ export function HoursStepper({
   format: (value: number) => string;
 }) {
   return (
-    <div className={`flex items-center justify-between gap-4 px-4 py-3 ${cardStaticClass}`}>
+    <div className={`flex items-center justify-between gap-4 px-3 py-3 ${cardStaticClass}`}>
       <button
         type="button"
         aria-label="Færre timer"

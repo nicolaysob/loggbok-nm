@@ -145,7 +145,7 @@ Regler:
     const raw = await generateGeminiJson(prompt);
     const parsed = aiResponseSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) {
-      return { error: "Kunne ikke tolke svaret fra AI. Prøv igjen." };
+      return { error: "Kunne ikke lage forslag. Prøv igjen." };
     }
 
     const items: WeekPlanProposal[] = [];
@@ -174,7 +174,7 @@ Regler:
     return { items };
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Noe gikk galt med AI.";
+      error instanceof Error ? error.message : "Noe gikk galt. Prøv igjen.";
     return { error: message };
   }
 }
