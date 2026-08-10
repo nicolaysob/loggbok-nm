@@ -78,7 +78,7 @@ export default async function WeekSummaryPage() {
           href="/mnd"
           className="text-meta font-medium text-navy-700 hover:text-navy-900"
         >
-          Se måneden for fakturering →
+          Se fakturering →
         </Link>
       </div>
 

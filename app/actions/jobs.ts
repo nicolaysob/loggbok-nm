@@ -78,7 +78,8 @@ export async function createJobFromCalendar(
   }
 
   const result = customerJobSchema.safeParse({
-    jobTypeId: formData.get("jobTypeId"),
+    title: formData.get("title"),
+    jobTypeId: formData.get("jobTypeId") || undefined,
     kind: formData.get("kind"),
     dueOn: dayKey,
     weekday: String(weekdayIndex(day)),
@@ -98,12 +99,15 @@ export async function createJobFromCalendar(
     return { message: "Kunden mangler område." };
   }
 
-  const type = await db.jobType.findUnique({
-    where: { id: result.data.jobTypeId },
-    select: { id: true },
-  });
-  if (!type) {
-    return { errors: { jobTypeId: ["Ugyldig oppdragstype"] } };
+  let jobTypeId: string | null = result.data.jobTypeId;
+  if (jobTypeId) {
+    const type = await db.jobType.findUnique({
+      where: { id: jobTypeId },
+      select: { id: true },
+    });
+    if (!type) {
+      return { errors: { jobTypeId: ["Ugyldig oppdragstype"] } };
+    }
   }
 
   const when = parseDateInput(dayKey);
@@ -115,7 +119,8 @@ export async function createJobFromCalendar(
   await db.customerJob.create({
     data: {
       areaId,
-      jobTypeId: result.data.jobTypeId,
+      title: result.data.title,
+      jobTypeId,
       kind: result.data.kind,
       dueOn: result.data.kind === "ONCE" ? when : null,
       weekday,
@@ -136,7 +141,8 @@ export async function createCustomerJob(
   await requireAdmin();
 
   const result = customerJobSchema.safeParse({
-    jobTypeId: formData.get("jobTypeId"),
+    title: formData.get("title"),
+    jobTypeId: formData.get("jobTypeId") || undefined,
     kind: formData.get("kind"),
     dueOn: formData.get("dueOn") || undefined,
     weekday: formData.get("weekday") || undefined,
@@ -152,12 +158,15 @@ export async function createCustomerJob(
     return { message: "Kunden mangler område." };
   }
 
-  const type = await db.jobType.findUnique({
-    where: { id: result.data.jobTypeId },
-    select: { id: true },
-  });
-  if (!type) {
-    return { errors: { jobTypeId: ["Ugyldig oppdragstype"] } };
+  let jobTypeId: string | null = result.data.jobTypeId;
+  if (jobTypeId) {
+    const type = await db.jobType.findUnique({
+      where: { id: jobTypeId },
+      select: { id: true },
+    });
+    if (!type) {
+      return { errors: { jobTypeId: ["Ugyldig oppdragstype"] } };
+    }
   }
 
   const startsOn = parseDateInput(
@@ -177,7 +186,8 @@ export async function createCustomerJob(
   await db.customerJob.create({
     data: {
       areaId,
-      jobTypeId: result.data.jobTypeId,
+      title: result.data.title,
+      jobTypeId,
       kind: result.data.kind,
       dueOn,
       weekday,

@@ -20,7 +20,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     ...(user?.role === "ADMIN"
       ? [
           { href: "/uke", label: "Uken" },
-          { href: "/mnd", label: "Måned" },
+          { href: "/mnd", label: "Fakturering" },
           { href: "/kunder", label: "Kunder" },
           { href: "/oppdragstyper", label: "Typer" },
         ]

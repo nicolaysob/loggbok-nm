@@ -101,22 +101,16 @@ function NewCustomerJobForm({
   );
   const formRef = useRef<HTMLFormElement>(null);
   const [kind, setKind] = useState<JobScheduleKind>("WEEKLY");
+  const [title, setTitle] = useState("");
   const today = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
     if (state?.message) {
       formRef.current?.reset();
       setKind("WEEKLY");
+      setTitle("");
     }
   }, [state]);
-
-  if (jobTypes.length === 0) {
-    return (
-      <p className="text-meta text-navy-700">
-        Legg til oppdragstyper under Oppdragstyper først.
-      </p>
-    );
-  }
 
   return (
     <form
@@ -126,26 +120,53 @@ function NewCustomerJobForm({
     >
       <p className="text-heading">Nytt oppdrag</p>
 
-      <Field
-        label="Type"
-        htmlFor="jobTypeId"
-        errors={state?.errors?.jobTypeId}
-      >
-        <select
-          id="jobTypeId"
-          name="jobTypeId"
+      <Field label="Gjøremål" htmlFor="title" errors={state?.errors?.title}>
+        <input
+          id="title"
+          name="title"
           required
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="F.eks. bytte pakninger på kran"
           className={inputClass}
-          defaultValue=""
-        >
-          <option value="">Velg …</option>
-          {jobTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </select>
+          list={jobTypes.length > 0 ? "admin-job-suggestions" : undefined}
+        />
+        {jobTypes.length > 0 && (
+          <datalist id="admin-job-suggestions">
+            {jobTypes.map((type) => (
+              <option key={type.id} value={type.name} />
+            ))}
+          </datalist>
+        )}
       </Field>
+
+      {jobTypes.length > 0 && (
+        <Field
+          label="Hurtigvalg (valgfritt)"
+          htmlFor="jobTypeId"
+          errors={state?.errors?.jobTypeId}
+        >
+          <select
+            id="jobTypeId"
+            name="jobTypeId"
+            className={inputClass}
+            defaultValue=""
+            onChange={(event) => {
+              const selected = jobTypes.find(
+                (type) => type.id === event.target.value,
+              );
+              if (selected) setTitle(selected.name);
+            }}
+          >
+            <option value="">—</option>
+            {jobTypes.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
 
       <Field label="Frekvens" htmlFor="kind" errors={state?.errors?.kind}>
         <select

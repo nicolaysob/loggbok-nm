@@ -68,7 +68,11 @@ export const jobTypeSchema = z.object({
 
 export const customerJobSchema = z
   .object({
-    jobTypeId: z.string().min(1, { error: "Velg oppdragstype" }),
+    title: z.string().trim().min(1, { error: "Skriv hva oppdraget er" }),
+    jobTypeId: z
+      .string()
+      .optional()
+      .transform((value) => (value && value.length > 0 ? value : null)),
     kind: z.enum(JobScheduleKind, { error: "Velg frekvens" }),
     dueOn: z.string().optional(),
     weekday: z.string().optional(),

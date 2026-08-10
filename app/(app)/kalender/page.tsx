@@ -63,6 +63,7 @@ export default async function CalendarPage({
         startsOn: true,
         active: true,
         notes: true,
+        title: true,
         jobType: { select: { name: true } },
         area: {
           select: {
@@ -114,7 +115,7 @@ export default async function CalendarPage({
         dayKey: key,
         customerId: job.area.customerId,
         customerName: job.area.customer.name,
-        typeName: job.jobType.name,
+        typeName: job.title || job.jobType?.name || "Oppdrag",
         notes: job.notes,
         completedBy: completionByDay.get(key) ?? null,
       };

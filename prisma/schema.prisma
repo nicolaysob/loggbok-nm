@@ -118,6 +118,8 @@ model LogEntry {
   comment    String?
   // Timer som desimal, f.eks. 2.5
   hours      Decimal? @db.Decimal(5, 2)
+  // Når ekstraarbeid er lagt inn i faktura — null = åpent
+  handledAt  DateTime?
 
   area           Area            @relation(fields: [areaId], references: [id], onDelete: Cascade)
   user           User            @relation(fields: [userId], references: [id])
@@ -129,6 +131,7 @@ model LogEntry {
 
   @@index([areaId, occurredAt])
   @@index([userId])
+  @@index([type, handledAt])
 }
 
 // Kobling mellom logginnføring og oppgavemal
@@ -213,7 +216,9 @@ model JobType {
 model CustomerJob {
   id        String          @id @default(cuid())
   areaId    String
-  jobTypeId String
+  // Fri tekst er hovedtittelen; type er valgfritt hurtigvalg
+  title     String
+  jobTypeId String?
   kind      JobScheduleKind
   // Engangsoppdrag: hvilken dag det skal gjøres
   dueOn     DateTime?
@@ -225,7 +230,7 @@ model CustomerJob {
   notes     String?
 
   area         Area             @relation(fields: [areaId], references: [id], onDelete: Cascade)
-  jobType      JobType          @relation(fields: [jobTypeId], references: [id], onDelete: Restrict)
+  jobType      JobType?         @relation(fields: [jobTypeId], references: [id], onDelete: Restrict)
   completions  JobCompletion[]
 
   createdAt DateTime @default(now())

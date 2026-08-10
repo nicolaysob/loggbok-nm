@@ -205,12 +205,10 @@ function AddJobForm({
   const field =
     "w-full rounded-lg border border-line bg-white px-2 py-2 text-meta text-navy-900 outline-none focus:border-navy-700";
 
-  if (customers.length === 0 || jobTypes.length === 0) {
+  if (customers.length === 0) {
     return (
       <div className="rounded-lg border border-line bg-navy-50/60 px-2 py-2 text-meta text-navy-700">
-        {jobTypes.length === 0
-          ? "Mangler oppdragstyper (admin)."
-          : "Mangler aktive kunder."}
+        Mangler aktive kunder.
         <button
           type="button"
           onClick={onCancel}
@@ -240,14 +238,20 @@ function AddJobForm({
 
       <label className="flex flex-col gap-1">
         <span className="text-meta font-semibold text-navy-700">Gjøremål</span>
-        <select name="jobTypeId" required className={field} defaultValue="">
-          <option value="">Velg …</option>
-          {jobTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </select>
+        <input
+          name="title"
+          required
+          placeholder="F.eks. bytte pakninger på kran"
+          className={field}
+          list={jobTypes.length > 0 ? "job-type-suggestions" : undefined}
+        />
+        {jobTypes.length > 0 && (
+          <datalist id="job-type-suggestions">
+            {jobTypes.map((type) => (
+              <option key={type.id} value={type.name} />
+            ))}
+          </datalist>
+        )}
       </label>
 
       <label className="flex flex-col gap-1">

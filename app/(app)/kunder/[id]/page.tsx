@@ -33,6 +33,7 @@ export default async function CustomerAdminPage({
               orderBy: { createdAt: "desc" },
               select: {
                 id: true,
+                title: true,
                 kind: true,
                 dueOn: true,
                 weekday: true,
@@ -96,14 +97,15 @@ export default async function CustomerAdminPage({
       <section className="flex flex-col gap-4">
         <h2 className="text-heading">Kalenderoppdrag</h2>
         <p className="text-meta text-navy-700">
-          Bestilte jobber som skal inn i ukeplanen. Velg type fra rullgardinen.
+          Bestilte jobber i ukeplanen. Skriv hva som skal gjøres — hurtigvalg er
+          valgfritt.
         </p>
         <CustomerJobs
           customerId={customer.id}
           jobTypes={jobTypes}
           jobs={(area?.customerJobs ?? []).map((job) => ({
             id: job.id,
-            typeName: job.jobType.name,
+            typeName: job.title || job.jobType?.name || "Oppdrag",
             kind: job.kind,
             dueOn: job.dueOn ? formatDate(job.dueOn) : null,
             weekday: job.weekday,
