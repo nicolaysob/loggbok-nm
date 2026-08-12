@@ -2,6 +2,7 @@ import Link from "next/link";
 import { logout } from "@/app/actions/auth";
 import { requireCustomer } from "@/lib/dal";
 import { BrandIcon } from "@/components/brand";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 import { outlineActionClass } from "@/lib/ui";
 
 export default async function PortalLayout({
@@ -48,7 +49,7 @@ export default async function PortalLayout({
       </header>
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:py-8">
-        {children}
+        <PullToRefresh>{children}</PullToRefresh>
       </main>
     </div>
   );

@@ -4,6 +4,7 @@ import { logout } from "@/app/actions/auth";
 import { getCurrentUser } from "@/lib/dal";
 import { BrandIcon } from "@/components/brand";
 import { MobileNav, type AppNavGroup } from "@/components/mobile-nav";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 import { outlineActionClass } from "@/lib/ui";
 
 const desktopLinkClass =
@@ -110,7 +111,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       </header>
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">
-        {children}
+        <PullToRefresh>{children}</PullToRefresh>
       </main>
     </div>
   );
