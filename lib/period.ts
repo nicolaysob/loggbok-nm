@@ -159,6 +159,19 @@ export function parseYmdKey(value: string): Ymd | null {
   };
 }
 
+/** Dato for loggføring — ikke frem i tid. Returnerer midnatt Oslo. */
+export function occurredAtFromYmdKey(
+  value: string,
+  now: Date = new Date(),
+): { at: Date } | { error: string } {
+  const ymd = parseYmdKey(value);
+  if (!ymd) return { error: "Velg en gyldig dato" };
+  if (ymdKey(ymd) > ymdKey(osloYmd(now))) {
+    return { error: "Datoen kan ikke være i fremtiden" };
+  }
+  return { at: osloMidnight(ymd.year, ymd.month, ymd.day) };
+}
+
 export function addCalendarDays(ymd: Ymd, delta: number): Ymd {
   return addDays(ymd, delta);
 }

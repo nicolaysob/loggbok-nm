@@ -6,7 +6,7 @@ import { frequencyLabels } from "@/lib/labels";
 import type { FormState } from "@/lib/validation";
 import { completeTasks } from "@/app/actions/log-entries";
 import { FieldError, StickySubmit } from "@/components/mobile-form";
-import { cardClass } from "@/lib/ui";
+import { cardClass, inputClass, labelClass } from "@/lib/ui";
 
 export type TaskOption = {
   id: string;
@@ -22,9 +22,11 @@ export type TaskGroup = {
 export function TasksForm({
   customerId,
   groups,
+  defaultDate,
 }: {
   customerId: string;
   groups: TaskGroup[];
+  defaultDate: string;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     completeTasks.bind(null, customerId),
@@ -33,6 +35,25 @@ export function TasksForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-8 pb-4">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="occurredOn" className={labelClass}>
+          Dato
+        </label>
+        <input
+          id="occurredOn"
+          name="occurredOn"
+          type="date"
+          required
+          defaultValue={defaultDate}
+          max={defaultDate}
+          className={`${inputClass} min-h-14`}
+        />
+        <p className="text-meta text-navy-700">
+          I dag som standard — endre hvis oppgavene ble gjort en annen dag.
+        </p>
+        <FieldError messages={state?.errors?.occurredOn} />
+      </div>
+
       {groups.map((group) => (
         <section key={group.frequency} className="flex flex-col gap-3">
           <h2 className="text-heading">{frequencyLabels[group.frequency]}</h2>

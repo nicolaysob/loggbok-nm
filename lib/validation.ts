@@ -28,6 +28,9 @@ export const areaSchema = z.object({
 
 export const visitNoteSchema = z.object({
   comment: z.string().trim().min(1, { error: "Skriv et notat om besøket" }),
+  occurredOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Velg dato" }),
 });
 
 export const extraWorkSchema = z.object({
@@ -39,6 +42,9 @@ export const extraWorkSchema = z.object({
       .max(24, { error: "En registrering kan ikke være over 24 timer" }),
   ),
   comment: z.string().trim().min(1, { error: "Beskriv hva som ble gjort" }),
+  occurredOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Velg dato" }),
 });
 
 export const issueSchema = z.object({

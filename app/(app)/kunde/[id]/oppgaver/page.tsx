@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
 import { frequencyOrder } from "@/lib/labels";
+import { osloYmd, ymdKey } from "@/lib/period";
 import { formatDate } from "@/lib/time";
 import { backLinkClass } from "@/lib/ui";
 import { TasksForm, type TaskGroup } from "./tasks-form";
@@ -84,7 +85,11 @@ export default async function TasksPage({
           Ingen oppgaver er satt opp for denne kunden ennå.
         </p>
       ) : (
-        <TasksForm customerId={customer.id} groups={groups} />
+        <TasksForm
+          customerId={customer.id}
+          groups={groups}
+          defaultDate={ymdKey(osloYmd(new Date()))}
+        />
       )}
     </div>
   );

@@ -14,12 +14,19 @@ import {
   noticeClass,
   outlineActionClass,
   textareaClass,
+  inputClass,
 } from "@/lib/ui";
 
 // De vanligste timetallene som ett trykk i stedet for mange på stepperen
 const quickHours = [0.5, 1, 1.5, 2, 3, 4];
 
-export function HoursForm({ customerId }: { customerId: string }) {
+export function HoursForm({
+  customerId,
+  defaultDate,
+}: {
+  customerId: string;
+  defaultDate: string;
+}) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     createExtraWork.bind(null, customerId),
     undefined,
@@ -31,6 +38,25 @@ export function HoursForm({ customerId }: { customerId: string }) {
       <p className={noticeClass}>
         Kun for arbeid utover kontrakten. Disse timene faktureres.
       </p>
+
+      <section className="flex flex-col gap-1.5">
+        <label htmlFor="occurredOn" className={labelClass}>
+          Dato
+        </label>
+        <input
+          id="occurredOn"
+          name="occurredOn"
+          type="date"
+          required
+          defaultValue={defaultDate}
+          max={defaultDate}
+          className={`${inputClass} min-h-14`}
+        />
+        <p className="text-meta text-navy-700">
+          I dag som standard — endre hvis arbeidet var en annen dag.
+        </p>
+        <FieldError messages={state?.errors?.occurredOn} />
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-heading">Timer</h2>

@@ -16,7 +16,7 @@ import {
   labelClass,
   textareaClass,
 } from "@/components/mobile-form";
-import { outlineActionClass } from "@/lib/ui";
+import { outlineActionClass, inputClass } from "@/lib/ui";
 
 function commentLines(comment: string): string[] {
   return comment
@@ -25,7 +25,13 @@ function commentLines(comment: string): string[] {
     .filter(Boolean);
 }
 
-export function LogForm({ customerId }: { customerId: string }) {
+export function LogForm({
+  customerId,
+  defaultDate,
+}: {
+  customerId: string;
+  defaultDate: string;
+}) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     createVisitNote.bind(null, customerId),
     undefined,
@@ -95,6 +101,25 @@ export function LogForm({ customerId }: { customerId: string }) {
 
   return (
     <form action={submit} className="flex flex-col gap-4 pb-4">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="occurredOn" className={labelClass}>
+          Dato
+        </label>
+        <input
+          id="occurredOn"
+          name="occurredOn"
+          type="date"
+          required
+          defaultValue={defaultDate}
+          max={defaultDate}
+          className={`${inputClass} min-h-14`}
+        />
+        <p className="text-meta text-navy-700">
+          I dag som standard — endre hvis besøket var en annen dag.
+        </p>
+        <FieldError messages={state?.errors?.occurredOn} />
+      </div>
+
       <div className="flex flex-col gap-2">
         <p className={labelClass}>Hurtigvalg</p>
         <div className="flex flex-wrap gap-2">

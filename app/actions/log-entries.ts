@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
+import { occurredAtFromYmdKey } from "@/lib/period";
 import { photosFromFormData } from "@/lib/photos";
 import {
   extraWorkSchema,
@@ -106,9 +107,15 @@ export async function createVisitNote(
 
   const result = visitNoteSchema.safeParse({
     comment: formData.get("comment"),
+    occurredOn: formData.get("occurredOn"),
   });
   if (!result.success) {
     return { errors: z.flattenError(result.error).fieldErrors };
+  }
+
+  const when = occurredAtFromYmdKey(result.data.occurredOn);
+  if ("error" in when) {
+    return { errors: { occurredOn: [when.error] } };
   }
 
   const photoResult = await photosFromFormData(formData);
@@ -123,7 +130,7 @@ export async function createVisitNote(
     data: {
       areaId,
       userId: user.id,
-      occurredAt: new Date(),
+      occurredAt: when.at,
       type: "VISIT_NOTE",
       comment: result.data.comment,
       photos: {
@@ -157,11 +164,17 @@ export async function completeTasks(
     return { message: "Huk av minst én oppgave." };
   }
 
+  const occurredOn = String(formData.get("occurredOn") ?? "").trim();
+  const when = occurredAtFromYmdKey(occurredOn);
+  if ("error" in when) {
+    return { errors: { occurredOn: [when.error] } };
+  }
+
   await db.logEntry.create({
     data: {
       areaId,
       userId: user.id,
-      occurredAt: new Date(),
+      occurredAt: when.at,
       type: "TASK_COMPLETION",
       completedTasks: {
         create: ownTasks.map((task) => ({ taskTemplateId: task.id })),
@@ -182,9 +195,15 @@ export async function createExtraWork(
   const result = extraWorkSchema.safeParse({
     hours: formData.get("hours"),
     comment: formData.get("comment"),
+    occurredOn: formData.get("occurredOn"),
   });
   if (!result.success) {
     return { errors: z.flattenError(result.error).fieldErrors };
+  }
+
+  const when = occurredAtFromYmdKey(result.data.occurredOn);
+  if ("error" in when) {
+    return { errors: { occurredOn: [when.error] } };
   }
 
   const areaId = await primaryAreaId(customerId);
@@ -194,7 +213,7 @@ export async function createExtraWork(
     data: {
       areaId,
       userId: user.id,
-      occurredAt: new Date(),
+      occurredAt: when.at,
       type: "EXTRA_WORK",
       hours: result.data.hours,
       comment: result.data.comment,
