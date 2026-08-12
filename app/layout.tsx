@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Source_Sans_3 } from "next/font/google";
+import { AddToHomeScreenPrompt } from "@/components/add-to-home-screen";
 import { OneSignalInit } from "@/components/onesignal-init";
 import { getCurrentUser } from "@/lib/dal";
 import "./globals.css";
@@ -51,6 +52,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sourceSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <AddToHomeScreenPrompt />
         <OneSignalInit
           externalUserId={
             user && (user.role === "ADMIN" || user.role === "EMPLOYEE")

@@ -3,10 +3,26 @@
 import { useEffect, useRef, useState } from "react";
 import OneSignal from "react-onesignal";
 import { ONESIGNAL_APP_ID } from "@/lib/onesignal-config";
+import { A2HS_PROMPT_KEY } from "@/components/add-to-home-screen";
 import { outlineActionClass, solidActionClass } from "@/lib/ui";
 
 // localStorage — sessionStorage nullstilles når PWA lukkes på iPhone
 const PROMPT_KEY = "onesignal-push-prompt-done";
+
+function isStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia("(display-mode: standalone)").matches) return true;
+  const nav = navigator as Navigator & { standalone?: boolean };
+  return Boolean(nav.standalone);
+}
+
+function isMobileBrowser(): boolean {
+  if (typeof window === "undefined") return false;
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  const narrow = window.matchMedia("(max-width: 900px)").matches;
+  const ua = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  return ua || (coarse && narrow);
+}
 
 function isLocalOrigin(origin: string): boolean {
   return (
@@ -20,6 +36,14 @@ function isLocalOrigin(origin: string): boolean {
 function shouldAskForPush(): boolean {
   if (typeof window === "undefined") return false;
   if (localStorage.getItem(PROMPT_KEY)) return false;
+  // På mobil: la «legg til hjemskjerm» komme først
+  if (
+    isMobileBrowser() &&
+    !isStandalone() &&
+    !localStorage.getItem(A2HS_PROMPT_KEY)
+  ) {
+    return false;
+  }
   // Allerede valgt i nettleseren — ikke mas
   if (typeof Notification !== "undefined" && Notification.permission !== "default") {
     return false;
