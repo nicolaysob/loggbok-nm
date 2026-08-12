@@ -27,7 +27,7 @@ export const visitPresets: readonly VisitPreset[] = [
   { kind: "simple", text: "Snømåking / strøing" },
   {
     kind: "group",
-    label: "Full vask",
+    label: "Renhold utført",
     header: "Renhold utført",
     items: [
       "Butikk",
