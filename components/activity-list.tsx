@@ -1,64 +1,23 @@
-import type { ActivityItem } from "@/lib/customer-activity";
-import {
-  activityKindLabels,
-  activityKindTone,
-} from "@/lib/customer-activity";
-import { formatHours } from "@/lib/format";
-import { issueStatusLabels } from "@/lib/labels";
-import { formatDate, groupByMonth } from "@/lib/time";
-import { PhotoThumbs } from "@/components/photo-thumbs";
-
-function ActivityRow({ item }: { item: ActivityItem }) {
-  return (
-    <li className="flex flex-col gap-1.5 px-4 py-3.5">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <span
-          className={`text-meta font-semibold ${activityKindTone[item.kind]}`}
-        >
-          {activityKindLabels[item.kind]}
-        </span>
-        <span className="font-mono text-meta font-medium text-navy-700">
-          {formatDate(item.at)}
-        </span>
-        {item.hours !== null && (
-          <span className="font-mono text-meta font-semibold text-navy-900">
-            {formatHours(item.hours)} t
-          </span>
-        )}
-      </div>
-
-      <p className="text-meta font-medium text-navy-700">
-        {item.userName}
-        {item.status && <> · {issueStatusLabels[item.status]}</>}
-      </p>
-
-      {item.text && (
-        <p className="text-body whitespace-pre-wrap text-navy-900">
-          {item.text}
-        </p>
-      )}
-
-      {item.tasks.length > 0 && (
-        <p className="text-body text-navy-900">{item.tasks.join(", ")}</p>
-      )}
-
-      {item.photoUrls.length > 0 && (
-        <div className="pt-1">
-          <PhotoThumbs urls={item.photoUrls} />
-        </div>
-      )}
-    </li>
-  );
-}
+import type { ActivityItem } from "@/lib/customer-activity-shared";
+import { groupByMonth } from "@/lib/time";
+import { ActivityRow } from "@/components/activity-row";
 
 export function ActivityList({
   items,
   emptyText,
   groupByMonth: useMonthGroups = false,
+  canDelete = false,
+  currentUserId,
+  isAdmin = false,
 }: {
   items: ActivityItem[];
   emptyText: string;
   groupByMonth?: boolean;
+  // Kun for admin i internappen — aldri i kundeportalen
+  canDelete?: boolean;
+  // Eier eller admin kan rette tekst — aldri i kundeportalen
+  currentUserId?: string;
+  isAdmin?: boolean;
 }) {
   if (items.length === 0) {
     return (
@@ -68,11 +27,17 @@ export function ActivityList({
     );
   }
 
+  function rowProps(item: ActivityItem) {
+    const canEdit =
+      Boolean(currentUserId) && (isAdmin || item.userId === currentUserId);
+    return { canDelete, canEdit };
+  }
+
   if (!useMonthGroups) {
     return (
       <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-white shadow-card">
         {items.map((item) => (
-          <ActivityRow key={item.key} item={item} />
+          <ActivityRow key={item.key} item={item} {...rowProps(item)} />
         ))}
       </ul>
     );
@@ -87,7 +52,7 @@ export function ActivityList({
           <h2 className="text-heading text-navy-900">{group.label}</h2>
           <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-white shadow-card">
             {group.items.map((item) => (
-              <ActivityRow key={item.key} item={item} />
+              <ActivityRow key={item.key} item={item} {...rowProps(item)} />
             ))}
           </ul>
         </section>

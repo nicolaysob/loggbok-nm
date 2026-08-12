@@ -45,6 +45,14 @@ export const issueSchema = z.object({
   description: z.string().trim().min(1, { error: "Beskriv avviket" }),
 });
 
+export const todoSchema = z.object({
+  text: z
+    .string()
+    .trim()
+    .min(1, { error: "Skriv hva som skal gjøres" })
+    .max(500, { error: "Teksten er for lang" }),
+});
+
 export const taskTemplateSchema = z.object({
   title: z.string().trim().min(1, { error: "Tittel må fylles ut" }),
   frequency: z.enum(Frequency, { error: "Velg frekvens" }),

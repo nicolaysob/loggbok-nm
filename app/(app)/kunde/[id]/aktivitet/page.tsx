@@ -15,7 +15,7 @@ export default async function CustomerActivityArchivePage({
   params,
   searchParams,
 }: PageProps<"/kunde/[id]/aktivitet">) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
   const { maaned } = await searchParams;
 
@@ -55,6 +55,9 @@ export default async function CustomerActivityArchivePage({
         <ActivityList
           items={items}
           emptyText="Ingen registreringer denne måneden."
+          canDelete={user.role === "ADMIN"}
+          currentUserId={user.id}
+          isAdmin={user.role === "ADMIN"}
         />
       </div>
     );

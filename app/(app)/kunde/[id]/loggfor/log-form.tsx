@@ -21,14 +21,27 @@ export function LogForm({ customerId }: { customerId: string }) {
   const [comment, setComment] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
 
-  function applyPreset(text: string) {
+  // Hurtigvalg fungerer som av/på — ett trykk legger til linjen,
+  // ett trykk til fjerner den. Da holder hurtigvalg alene for å lagre.
+  function togglePreset(text: string) {
     setComment((current) => {
-      const trimmed = current.trim();
-      if (!trimmed) return text;
-      if (trimmed.includes(text)) return current;
-      return `${trimmed}\n${text}`;
+      const lines = current
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+      if (lines.includes(text)) {
+        return lines.filter((line) => line !== text).join("\n");
+      }
+      return [...lines, text].join("\n");
     });
   }
+
+  const activePresets = new Set(
+    comment
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean),
+  );
 
   function submit(formData: FormData) {
     formData.set("comment", comment);
@@ -44,16 +57,25 @@ export function LogForm({ customerId }: { customerId: string }) {
       <div className="flex flex-col gap-2">
         <p className={labelClass}>Hurtigvalg</p>
         <div className="flex flex-wrap gap-2">
-          {visitPresets.map((preset) => (
-            <button
-              key={preset}
-              type="button"
-              onClick={() => applyPreset(preset)}
-              className={`min-h-12 rounded-md px-4 text-meta font-semibold ${outlineActionClass}`}
-            >
-              {preset}
-            </button>
-          ))}
+          {visitPresets.map((preset) => {
+            const active = activePresets.has(preset);
+            return (
+              <button
+                key={preset}
+                type="button"
+                aria-pressed={active}
+                onClick={() => togglePreset(preset)}
+                className={`min-h-12 rounded-md px-4 text-meta font-semibold transition-all duration-150 ${
+                  active
+                    ? "border border-brand bg-brand-50 text-green-700"
+                    : outlineActionClass
+                }`}
+              >
+                {active ? "✓ " : ""}
+                {preset}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -64,7 +86,6 @@ export function LogForm({ customerId }: { customerId: string }) {
         id="comment"
         name="comment"
         rows={6}
-        autoFocus
         value={comment}
         onChange={(event) => setComment(event.target.value)}
         className={textareaClass}

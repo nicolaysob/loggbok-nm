@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/dal";
+import { requireAdmin, requireUser } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
 import { photosFromFormData } from "@/lib/photos";
 import {
@@ -21,6 +21,80 @@ function done(customerId: string): never {
   revalidatePath("/uke");
   revalidatePath("/mnd");
   redirect(`/kunde/${customerId}?lagret=1`);
+}
+
+// Kun admin — fjerner feilregistreringer så loggen holder seg ryddig.
+// Avkryssede oppgaver og bilder slettes automatisk (cascade).
+// NB: sletting av EXTRA_WORK fjerner også timene fra fakturagrunnlaget.
+export async function deleteLogEntry(logEntryId: string) {
+  await requireAdmin();
+
+  const entry = await db.logEntry.delete({
+    where: { id: logEntryId },
+    select: { area: { select: { customerId: true } } },
+  });
+
+  revalidatePath("/");
+  revalidatePath(`/kunde/${entry.area.customerId}`);
+  revalidatePath(`/kunde/${entry.area.customerId}/aktivitet`);
+  revalidatePath("/uke");
+  revalidatePath("/mnd");
+}
+
+// Eier eller admin kan rette feilskrevet kommentar
+export async function updateLogEntryComment(
+  logEntryId: string,
+  comment: string,
+): Promise<{ error?: string }> {
+  const user = await requireUser();
+
+  const entry = await db.logEntry.findUnique({
+    where: { id: logEntryId },
+    select: {
+      type: true,
+      userId: true,
+      area: { select: { customerId: true } },
+    },
+  });
+  if (!entry) return { error: "Registreringen finnes ikke" };
+  if (user.role !== "ADMIN" && entry.userId !== user.id) {
+    return { error: "Du kan bare redigere egne registreringer" };
+  }
+
+  // Besøk og ekstraarbeid krever tekst; oppgaveavkryssinger kan stå uten
+  if (entry.type === "VISIT_NOTE") {
+    const result = visitNoteSchema.safeParse({ comment });
+    if (!result.success) {
+      return {
+        error: z.flattenError(result.error).fieldErrors.comment?.[0],
+      };
+    }
+    await db.logEntry.update({
+      where: { id: logEntryId },
+      data: { comment: result.data.comment },
+    });
+  } else if (entry.type === "EXTRA_WORK") {
+    const trimmed = comment.trim();
+    if (!trimmed) {
+      return { error: "Beskriv hva som ble gjort" };
+    }
+    await db.logEntry.update({
+      where: { id: logEntryId },
+      data: { comment: trimmed },
+    });
+  } else {
+    const trimmed = comment.trim();
+    await db.logEntry.update({
+      where: { id: logEntryId },
+      data: { comment: trimmed === "" ? null : trimmed },
+    });
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/kunde/${entry.area.customerId}`);
+  revalidatePath(`/kunde/${entry.area.customerId}/aktivitet`);
+  revalidatePath("/uke");
+  return {};
 }
 
 export async function createVisitNote(

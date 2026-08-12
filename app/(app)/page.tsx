@@ -62,6 +62,7 @@ export default async function HomePage() {
       _count: {
         select: {
           messages: { where: { readAt: null } },
+          todos: { where: { doneAt: null } },
         },
       },
     },
@@ -83,6 +84,7 @@ export default async function HomePage() {
         name: customer.name,
         openIssues,
         unreadMessages: customer._count.messages,
+        openTodos: customer._count.todos,
         lastVisit:
           visits.length === 0
             ? null
@@ -154,16 +156,19 @@ export default async function HomePage() {
         {sorted.map((customer) => {
           const tone = visitTone(customer.lastVisit);
           return (
-            <li key={customer.id}>
+            <li
+              key={customer.id}
+              className={`flex items-stretch ${
+                customer.openIssues > 0
+                  ? "bg-red-50/40"
+                  : customer.unreadMessages > 0
+                    ? "bg-navy-50/70"
+                    : ""
+              }`}
+            >
               <Link
                 href={`/kunde/${customer.id}`}
-                className={`flex min-h-16 items-center gap-3 px-4 py-3.5 text-navy-900 transition-colors active:bg-navy-50 ${
-                  customer.openIssues > 0
-                    ? "bg-red-50/40"
-                    : customer.unreadMessages > 0
-                      ? "bg-navy-50/70"
-                      : ""
-                }`}
+                className="flex min-h-16 min-w-0 flex-1 items-center gap-3 py-3.5 pl-4 pr-3 text-navy-900 transition-colors active:bg-navy-50"
               >
                 <span className="min-w-0 flex-1 truncate text-heading">
                   {customer.name}
@@ -182,11 +187,36 @@ export default async function HomePage() {
                       : `${customer.unreadMessages} meldinger`}
                   </span>
                 )}
+                {customer.openTodos > 0 && (
+                  <span className="shrink-0 text-meta font-semibold text-navy-700">
+                    {customer.openTodos === 1
+                      ? "1 gjøremål"
+                      : `${customer.openTodos} gjøremål`}
+                  </span>
+                )}
                 <span
                   className={`shrink-0 font-mono text-meta font-medium ${tone.className}`}
                 >
                   {tone.label}
                 </span>
+              </Link>
+              {/* Snarvei rett til loggføring — sparer turen innom kundekortet */}
+              <Link
+                href={`/kunde/${customer.id}/loggfor`}
+                aria-label={`Loggfør besøk hos ${customer.name}`}
+                className="flex w-14 shrink-0 items-center justify-center border-l border-line text-brand transition-colors active:bg-brand-50"
+              >
+                <svg
+                  aria-hidden
+                  viewBox="0 0 24 24"
+                  className="size-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.25"
+                  strokeLinecap="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
               </Link>
             </li>
           );

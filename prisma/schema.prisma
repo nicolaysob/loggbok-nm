@@ -74,9 +74,32 @@ model Customer {
   areas    Area[]
   portalUsers User[]
   messages CustomerMessage[]
+  todos    Todo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Internt gjøremål på en kunde — vises aldri i kundeportalen.
+// Skillet mot Issue: avvik = noe er galt, gjøremål = noe skal gjøres.
+model Todo {
+  id           String    @id @default(cuid())
+  customerId   String
+  createdById  String?
+  text         String
+  // null = ikke utført ennå
+  doneAt       DateTime?
+  doneByUserId String?
+
+  customer  Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdBy User?    @relation("TodoCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  doneBy    User?    @relation("TodoCompleter", fields: [doneByUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId, doneAt])
+  @@index([createdById])
+  @@index([doneByUserId])
 }
 
 // Melding fra kundeportalen til N&M
@@ -234,6 +257,8 @@ model User {
   timeEntries    TimeEntry[]
   messages       CustomerMessage[] @relation("CustomerMessageSender")
   signedMessages CustomerMessage[] @relation("CustomerMessageSigner")
+  todosCreated   Todo[]            @relation("TodoCreator")
+  todosCompleted Todo[]            @relation("TodoCompleter")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -1,13 +1,22 @@
-import type { IssueStatus, LogType } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { decimalToNumber } from "@/lib/format";
-import { logTypeLabels } from "@/lib/labels";
+import {
+  type ActivityItem,
+  type ActivityKind,
+} from "@/lib/customer-activity-shared";
 import {
   calendarMonth,
   currentMonth,
   osloYmd,
   yearMonthParam,
 } from "@/lib/period";
+
+export {
+  type ActivityItem,
+  type ActivityKind,
+  activityKindLabels,
+  activityKindTone,
+} from "@/lib/customer-activity-shared";
 
 export const RECENT_ACTIVITY_DAYS = 14;
 export const RECENT_ACTIVITY_LIMIT = 15;
@@ -19,32 +28,6 @@ export type ActivityMonthFolder = {
   label: string;
   count: number;
   isCurrent: boolean;
-};
-
-export type ActivityKind = LogType | "ISSUE";
-
-export type ActivityItem = {
-  key: string;
-  kind: ActivityKind;
-  at: Date;
-  userName: string;
-  text: string | null;
-  hours: number | null;
-  tasks: string[];
-  status: IssueStatus | null;
-  photoUrls: string[];
-};
-
-export const activityKindLabels: Record<ActivityKind, string> = {
-  ...logTypeLabels,
-  ISSUE: "Avvik",
-};
-
-export const activityKindTone: Record<ActivityKind, string> = {
-  VISIT_NOTE: "text-navy-900",
-  TASK_COMPLETION: "text-green-700",
-  EXTRA_WORK: "text-navy-900",
-  ISSUE: "text-red-700",
 };
 
 export function recentActivitySince(now = new Date()): Date {
@@ -90,6 +73,7 @@ export async function getCustomerActivity(
         occurredAt: true,
         hours: true,
         comment: true,
+        userId: true,
         user: { select: { name: true } },
         completedTasks: {
           select: { taskTemplate: { select: { title: true } } },
@@ -109,6 +93,7 @@ export async function getCustomerActivity(
         description: true,
         status: true,
         createdAt: true,
+        userId: true,
         user: { select: { name: true } },
         photos: { select: { url: true }, take: 3 },
       },
@@ -118,8 +103,10 @@ export async function getCustomerActivity(
   const items: ActivityItem[] = [
     ...logEntries.map((entry) => ({
       key: `log-${entry.id}`,
+      id: entry.id,
       kind: entry.type as ActivityKind,
       at: entry.occurredAt,
+      userId: entry.userId,
       userName: entry.user.name,
       text: entry.comment,
       hours: entry.hours === null ? null : decimalToNumber(entry.hours),
@@ -129,8 +116,10 @@ export async function getCustomerActivity(
     })),
     ...issues.map((issue) => ({
       key: `issue-${issue.id}`,
+      id: issue.id,
       kind: "ISSUE" as const,
       at: issue.createdAt,
+      userId: issue.userId,
       userName: issue.user.name,
       text: issue.description,
       hours: null,

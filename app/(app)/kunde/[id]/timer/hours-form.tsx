@@ -9,7 +9,15 @@ import {
   HoursStepper,
   StickySubmit,
 } from "@/components/mobile-form";
-import { labelClass, noticeClass, textareaClass } from "@/lib/ui";
+import {
+  labelClass,
+  noticeClass,
+  outlineActionClass,
+  textareaClass,
+} from "@/lib/ui";
+
+// De vanligste timetallene som ett trykk i stedet for mange på stepperen
+const quickHours = [0.5, 1, 1.5, 2, 3, 4];
 
 export function HoursForm({ customerId }: { customerId: string }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
@@ -26,6 +34,26 @@ export function HoursForm({ customerId }: { customerId: string }) {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-heading">Timer</h2>
+        <div className="flex flex-wrap gap-2">
+          {quickHours.map((value) => {
+            const active = hours === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setHours(value)}
+                className={`min-h-12 min-w-16 rounded-md px-3 font-mono text-body font-semibold transition-all duration-150 ${
+                  active
+                    ? "border border-brand bg-brand-50 text-green-700"
+                    : outlineActionClass
+                }`}
+              >
+                {formatHours(value)}
+              </button>
+            );
+          })}
+        </div>
         <HoursStepper hours={hours} onChange={setHours} format={formatHours} />
         <input type="hidden" name="hours" value={hours} />
         <FieldError messages={state?.errors?.hours} />

@@ -11,7 +11,7 @@ import { IssueList, type IssueItem } from "./issue-list";
 export default async function IssuesPage({
   params,
 }: PageProps<"/kunde/[id]/avvik">) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
 
   const customer = await db.customer.findUnique({
@@ -29,6 +29,7 @@ export default async function IssuesPage({
       description: true,
       status: true,
       createdAt: true,
+      userId: true,
       user: { select: { name: true } },
       photos: { select: { url: true }, take: 3 },
     },
@@ -48,6 +49,7 @@ export default async function IssuesPage({
       status: issue.status,
       created: formatDate(issue.createdAt),
       reportedBy: issue.user.name,
+      userId: issue.userId,
       photoUrls: issue.photos.map((photo) => photo.url),
     }));
 
@@ -67,7 +69,11 @@ export default async function IssuesPage({
           <h2 className="text-heading">
             Registrerte avvik
           </h2>
-          <IssueList issues={sorted} />
+          <IssueList
+            issues={sorted}
+            isAdmin={user.role === "ADMIN"}
+            currentUserId={user.id}
+          />
         </section>
       )}
     </div>

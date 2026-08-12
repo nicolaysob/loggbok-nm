@@ -2,8 +2,11 @@
 
 import type { IssueStatus } from "@/generated/prisma/enums";
 import { issueStatusLabels } from "@/lib/labels";
-import { setIssueStatus } from "@/app/actions/issues";
+import { setIssueStatus, updateIssueDescription } from "@/app/actions/issues";
+import { convertIssueToTodo } from "@/app/actions/todos";
 import { cardStaticClass, outlineActionClass } from "@/lib/ui";
+import { AdminDeleteButton } from "@/components/admin-delete-button";
+import { EditableText } from "@/components/editable-text";
 import { PhotoThumbs } from "@/components/photo-thumbs";
 
 export type IssueItem = {
@@ -12,6 +15,7 @@ export type IssueItem = {
   status: IssueStatus;
   created: string;
   reportedBy: string;
+  userId: string;
   photoUrls: string[];
 };
 
@@ -32,61 +36,98 @@ const statusActionLabels: Record<IssueStatus, string> = {
   CLOSED: "Lukk (utbedret)",
 };
 
-export function IssueList({ issues }: { issues: IssueItem[] }) {
+export function IssueList({
+  issues,
+  isAdmin = false,
+  currentUserId,
+}: {
+  issues: IssueItem[];
+  isAdmin?: boolean;
+  currentUserId?: string;
+}) {
   return (
     <ul className="flex flex-col gap-3">
-      {issues.map((issue) => (
-        <li
-          key={issue.id}
-          className={`flex flex-col gap-3 px-4 py-3 ${cardStaticClass} ${
-            issue.status === "OPEN"
-              ? "border-red-700/25 bg-red-50/50"
-              : issue.status === "IN_PROGRESS"
-                ? "border-amber-700/20 bg-amber-50/40"
-                : ""
-          }`}
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full px-3 py-1 text-meta font-semibold ${badgeClasses[issue.status]}`}
-            >
-              {issueStatusLabels[issue.status]}
-            </span>
-            <span className="font-mono text-meta font-medium text-navy-700">
-              {issue.created}
-            </span>
-            <span className="text-meta font-medium text-navy-700">
-              {issue.reportedBy}
-            </span>
-          </div>
+      {issues.map((issue) => {
+        const canEdit =
+          Boolean(currentUserId) &&
+          (isAdmin || issue.userId === currentUserId);
 
-          <p className="text-body text-navy-900">{issue.description}</p>
+        return (
+          <li
+            key={issue.id}
+            className={`flex flex-col gap-3 px-4 py-3 ${cardStaticClass} ${
+              issue.status === "OPEN"
+                ? "border-red-700/25 bg-red-50/50"
+                : issue.status === "IN_PROGRESS"
+                  ? "border-amber-700/20 bg-amber-50/40"
+                  : ""
+            }`}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`rounded-full px-3 py-1 text-meta font-semibold ${badgeClasses[issue.status]}`}
+              >
+                {issueStatusLabels[issue.status]}
+              </span>
+              <span className="font-mono text-meta font-medium text-navy-700">
+                {issue.created}
+              </span>
+              <span className="text-meta font-medium text-navy-700">
+                {issue.reportedBy}
+              </span>
+            </div>
 
-          <PhotoThumbs urls={issue.photoUrls} />
+            <EditableText
+              initialText={issue.description}
+              canEdit={canEdit}
+              onSave={(text) => updateIssueDescription(issue.id, text)}
+            />
 
-          <div className="flex flex-wrap gap-2">
-            {allStatuses
-              .filter((status) => status !== issue.status)
-              .map((status) => (
-                <form
-                  key={status}
-                  action={setIssueStatus.bind(null, issue.id, status)}
-                >
-                  <button
-                    type="submit"
-                    className={`min-h-14 rounded-md px-4 text-meta font-semibold ${
-                      status === "CLOSED"
-                        ? "border border-green-700/30 bg-green-50 text-green-700 active:bg-green-50"
-                        : outlineActionClass
-                    }`}
+            <PhotoThumbs urls={issue.photoUrls} />
+
+            <div className="flex flex-wrap gap-2">
+              {allStatuses
+                .filter((status) => status !== issue.status)
+                .map((status) => (
+                  <form
+                    key={status}
+                    action={setIssueStatus.bind(null, issue.id, status)}
                   >
-                    {statusActionLabels[status]}
-                  </button>
-                </form>
-              ))}
-          </div>
-        </li>
-      ))}
+                    <button
+                      type="submit"
+                      className={`min-h-14 rounded-md px-4 text-meta font-semibold ${
+                        status === "CLOSED"
+                          ? "border border-green-700/30 bg-green-50 text-green-700 active:bg-green-50"
+                          : outlineActionClass
+                      }`}
+                    >
+                      {statusActionLabels[status]}
+                    </button>
+                  </form>
+                ))}
+              {/* Admin rydder feilmeldte gjøremål ut av avvikslista */}
+              {isAdmin && (
+                <>
+                  <form action={convertIssueToTodo.bind(null, issue.id)}>
+                    <button
+                      type="submit"
+                      className={`min-h-14 rounded-md px-4 text-meta font-semibold ${outlineActionClass}`}
+                    >
+                      Gjør om til gjøremål
+                    </button>
+                  </form>
+                  <AdminDeleteButton
+                    target="issue"
+                    id={issue.id}
+                    confirmText="Slette avviket permanent? Dette kan ikke angres."
+                    className="min-h-14 rounded-md border border-red-700/25 bg-white px-4 text-meta font-semibold text-red-700 transition-colors active:bg-red-50 disabled:opacity-50"
+                  />
+                </>
+              )}
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }

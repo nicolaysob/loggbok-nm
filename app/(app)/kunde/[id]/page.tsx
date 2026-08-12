@@ -17,6 +17,7 @@ import {
 import { ActivityList } from "@/components/activity-list";
 import { IssueList } from "./avvik/issue-list";
 import { SignMessageButton } from "./sign-message-button";
+import { TodoList } from "./todo-list";
 
 const actions = [
   {
@@ -55,7 +56,7 @@ export default async function CustomerPage({
   params,
   searchParams,
 }: PageProps<"/kunde/[id]">) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
   const { lagret } = await searchParams;
 
@@ -66,7 +67,11 @@ export default async function CustomerPage({
 
   if (!customer) notFound();
 
-  const [openIssues, openMessages, recentActivity] = await Promise.all([
+  // Nylig utførte gjøremål vises med angre-knapp i en uke
+  const doneSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  const [openIssues, openMessages, recentActivity, openTodos, doneTodos] =
+    await Promise.all([
     db.issue.findMany({
       where: {
         area: { customerId: id },
@@ -78,6 +83,7 @@ export default async function CustomerPage({
         description: true,
         status: true,
         createdAt: true,
+        userId: true,
         user: { select: { name: true } },
         photos: { select: { url: true }, take: 3 },
       },
@@ -95,6 +101,27 @@ export default async function CustomerPage({
     getCustomerActivity(id, {
       since: recentActivitySince(),
       take: RECENT_ACTIVITY_LIMIT,
+    }),
+    db.todo.findMany({
+      where: { customerId: id, doneAt: null },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        text: true,
+        createdAt: true,
+        createdById: true,
+        createdBy: { select: { name: true } },
+      },
+    }),
+    db.todo.findMany({
+      where: { customerId: id, doneAt: { gte: doneSince } },
+      orderBy: { doneAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        text: true,
+        doneBy: { select: { name: true } },
+      },
     }),
   ]);
 
@@ -190,12 +217,15 @@ export default async function CustomerPage({
             </Link>
           </div>
           <IssueList
+            isAdmin={user.role === "ADMIN"}
+            currentUserId={user.id}
             issues={openIssues.map((issue) => ({
               id: issue.id,
               description: issue.description,
               status: issue.status,
               created: formatDate(issue.createdAt),
               reportedBy: issue.user.name,
+              userId: issue.userId,
               photoUrls: issue.photos.map((photo) => photo.url),
             }))}
           />
@@ -203,11 +233,38 @@ export default async function CustomerPage({
       )}
 
       <section className="flex flex-col gap-3">
+        <h2 className="text-heading">Gjøremål</h2>
+        <p className="text-meta text-navy-700">
+          Interne ting som skal gjøres — vises ikke for kunden.
+        </p>
+        <TodoList
+          customerId={customer.id}
+          currentUserId={user.id}
+          isAdmin={user.role === "ADMIN"}
+          open={openTodos.map((todo) => ({
+            id: todo.id,
+            text: todo.text,
+            created: formatDate(todo.createdAt),
+            createdBy: todo.createdBy?.name ?? null,
+            createdById: todo.createdById,
+          }))}
+          recentlyDone={doneTodos.map((todo) => ({
+            id: todo.id,
+            text: todo.text,
+            doneBy: todo.doneBy?.name ?? null,
+          }))}
+        />
+      </section>
+
+      <section className="flex flex-col gap-3">
         <h2 className="text-heading">Siste aktivitet</h2>
         <p className="text-meta text-navy-700">Siste 14 dager</p>
         <ActivityList
           items={recentActivity}
           emptyText="Ingen registreringer de siste 14 dagene."
+          canDelete={user.role === "ADMIN"}
+          currentUserId={user.id}
+          isAdmin={user.role === "ADMIN"}
         />
         <Link
           href={`/kunde/${customer.id}/aktivitet`}
