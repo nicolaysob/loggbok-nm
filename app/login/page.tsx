@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { BrandLogo } from "@/components/brand";
 import { LoginForm } from "./login-form";
 
@@ -24,7 +25,16 @@ export default function LoginPage() {
       </div>
 
       <footer className="border-t border-line px-6 py-4 text-center">
-        <p className="text-meta text-navy-700">N&amp;M Vaktmesterservice AS</p>
+        <p className="text-meta text-navy-700">
+          N&amp;M Vaktmesterservice AS
+          {" · "}
+          <Link
+            href="/personvern"
+            className="font-medium text-navy-700 underline underline-offset-2 hover:text-navy-900"
+          >
+            Personvern
+          </Link>
+        </p>
       </footer>
     </main>
   );

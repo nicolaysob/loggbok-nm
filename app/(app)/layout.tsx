@@ -101,6 +101,15 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:max-w-6xl sm:py-8">
         <PullToRefresh>{children}</PullToRefresh>
       </main>
+
+      <footer className="border-t border-line px-4 py-3 text-center">
+        <Link
+          href="/personvern"
+          className="text-meta font-medium text-navy-700 hover:text-navy-900"
+        >
+          Personvern
+        </Link>
+      </footer>
     </div>
   );
 }

@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
 
   const session = await decrypt(request.cookies.get(SESSION_COOKIE)?.value);
 
-  if (!session && !isLoginPage) {
+  if (!session && !isLoginPage && pathname !== "/personvern") {
     return NextResponse.redirect(new URL("/login", request.nextUrl));
   }
 
