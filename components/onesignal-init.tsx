@@ -2,10 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import OneSignal from "react-onesignal";
+import { ONESIGNAL_APP_ID } from "@/lib/onesignal-config";
 import { solidActionClass } from "@/lib/ui";
-
-// App ID fra OneSignal-dashboardet (Web / Custom Code)
-export const ONESIGNAL_APP_ID = "a0c7b9f2-a96a-46b2-a231-fe89711f0cd3";
 
 const DIALOG_SHOWN_KEY = "onesignal-integration-dialog-shown";
 

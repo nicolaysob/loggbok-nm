@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireCustomer, requireUser } from "@/lib/dal";
+import { notifyStaffNewCustomerMessage } from "@/lib/onesignal-server";
 import { customerMessageSchema, type FormState } from "@/lib/validation";
 
 export async function createCustomerMessage(
@@ -19,17 +20,32 @@ export async function createCustomerMessage(
     return { errors: z.flattenError(result.error).fieldErrors };
   }
 
+  const customer = await db.customer.findUnique({
+    where: { id: user.customerId },
+    select: { id: true, name: true },
+  });
+  if (!customer) {
+    return { message: "Kundekontoen er ikke koblet til en kunde." };
+  }
+
   await db.customerMessage.create({
     data: {
-      customerId: user.customerId,
+      customerId: customer.id,
       userId: user.id,
       body: result.data.body,
     },
   });
 
+  // Push til ansatte — feiler ikke lagringen hvis OneSignal er nede
+  void notifyStaffNewCustomerMessage({
+    customerId: customer.id,
+    customerName: customer.name,
+    preview: result.data.body,
+  });
+
   revalidatePath("/portal");
   revalidatePath("/portal/meldinger");
-  revalidatePath(`/kunde/${user.customerId}`);
+  revalidatePath(`/kunde/${customer.id}`);
   revalidatePath("/");
   return { message: "Meldingen er sendt." };
 }

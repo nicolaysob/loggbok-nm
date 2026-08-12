@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin, requireStaff } from "@/lib/dal";
+import { notifyStaffNewTodo } from "@/lib/onesignal-server";
 import { todoSchema, type FormState } from "@/lib/validation";
 
 function revalidateTodoViews(customerId: string) {
@@ -31,6 +32,19 @@ export async function createTodo(
       text: result.data.text,
     },
   });
+
+  const customer = await db.customer.findUnique({
+    where: { id: customerId },
+    select: { name: true },
+  });
+  if (customer) {
+    void notifyStaffNewTodo({
+      customerId,
+      customerName: customer.name,
+      text: result.data.text,
+      createdByUserId: user.id,
+    });
+  }
 
   revalidateTodoViews(customerId);
   return undefined;
@@ -81,6 +95,19 @@ export async function convertIssueToTodo(issueId: string) {
     }),
     db.issue.delete({ where: { id: issueId } }),
   ]);
+
+  const customer = await db.customer.findUnique({
+    where: { id: issue.area.customerId },
+    select: { name: true },
+  });
+  if (customer) {
+    void notifyStaffNewTodo({
+      customerId: issue.area.customerId,
+      customerName: customer.name,
+      text: issue.description,
+      createdByUserId: issue.userId,
+    });
+  }
 
   revalidateTodoViews(issue.area.customerId);
   revalidatePath("/uke");
