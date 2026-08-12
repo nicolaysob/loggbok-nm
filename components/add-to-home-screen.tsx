@@ -73,15 +73,18 @@ export function AddToHomeScreenPrompt() {
         {ios ? (
           <ol className="mt-4 list-decimal space-y-2.5 pl-5 text-body text-navy-900">
             <li>
-              Trykk på <span className="font-semibold">Del</span>-knappen i
-              Safari (firkant med pil opp)
+              Trykk på <span className="font-semibold">prikkene</span>{" "}
+              <span className="font-semibold">⋯</span>
+            </li>
+            <li>
+              Trykk på <span className="font-semibold">Del</span>
+            </li>
+            <li>
+              Trykk på <span className="font-semibold">Vis mer</span>
             </li>
             <li>
               Velg{" "}
               <span className="font-semibold">Legg til på Hjem-skjerm</span>
-            </li>
-            <li>
-              Trykk <span className="font-semibold">Legg til</span>
             </li>
           </ol>
         ) : (
