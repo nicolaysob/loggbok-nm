@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Source_Sans_3 } from "next/font/google";
+import { OneSignalInit } from "@/components/onesignal-init";
+import { getCurrentUser } from "@/lib/dal";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -40,13 +42,18 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const user = await getCurrentUser();
+
   return (
     <html
       lang="no"
       className={`${sourceSans.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <OneSignalInit externalUserId={user?.id ?? null} />
+        {children}
+      </body>
     </html>
   );
 }
