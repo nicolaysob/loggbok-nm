@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import OneSignal from "react-onesignal";
 import { ONESIGNAL_APP_ID } from "@/lib/onesignal-config";
-import { solidActionClass } from "@/lib/ui";
+import { outlineActionClass, solidActionClass } from "@/lib/ui";
 
-const DIALOG_SHOWN_KEY = "onesignal-integration-dialog-shown";
+// localStorage — sessionStorage nullstilles når PWA lukkes på iPhone
+const PROMPT_KEY = "onesignal-push-prompt-done";
 
 function isLocalOrigin(origin: string): boolean {
   return (
@@ -14,6 +15,16 @@ function isLocalOrigin(origin: string): boolean {
     origin.startsWith("http://127.0.0.1") ||
     origin.startsWith("https://127.0.0.1")
   );
+}
+
+function shouldAskForPush(): boolean {
+  if (typeof window === "undefined") return false;
+  if (localStorage.getItem(PROMPT_KEY)) return false;
+  // Allerede valgt i nettleseren — ikke mas
+  if (typeof Notification !== "undefined" && Notification.permission !== "default") {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -63,13 +74,10 @@ export function OneSignalInit({
       if (cancelled) return;
       setReady(true);
 
-      // Bekreftelsesdialog én gang etter at SDK er klar (web: før tillatelse)
-      if (!sessionStorage.getItem(DIALOG_SHOWN_KEY)) {
-        sessionStorage.setItem(DIALOG_SHOWN_KEY, "1");
+      if (shouldAskForPush()) {
         setShowDialog(true);
       }
 
-      // På web er id undefined inntil server-tildelt UUID finnes
       const onChange = () => {
         const id = OneSignal.User.PushSubscription.id;
         if (id) {
@@ -95,6 +103,11 @@ export function OneSignalInit({
     });
   }, [ready, externalUserId]);
 
+  function dismissPrompt() {
+    localStorage.setItem(PROMPT_KEY, "1");
+    setShowDialog(false);
+  }
+
   if (!showDialog) return null;
 
   return (
@@ -109,21 +122,28 @@ export function OneSignalInit({
           id="onesignal-dialog-title"
           className="text-heading text-navy-900"
         >
-          Your OneSignal SDK integration is complete!
+          Få varsel på telefonen?
         </h2>
         <p className="mt-2 text-body text-navy-700">
-          You can now send Push Notifications &amp; In-App Messages through
-          OneSignal. Tap below to enable push notifications.
+          Vi kan si ifra når kunden sender melding eller det legges inn et
+          gjøremål.
         </p>
         <button
           type="button"
           className={`mt-5 min-h-14 w-full rounded-md px-4 text-body font-semibold ${solidActionClass}`}
           onClick={() => {
-            setShowDialog(false);
+            dismissPrompt();
             void OneSignal.Notifications.requestPermission();
           }}
         >
-          Got it
+          Tillat varsler
+        </button>
+        <button
+          type="button"
+          className={`mt-2 min-h-12 w-full rounded-md px-4 text-meta font-semibold ${outlineActionClass}`}
+          onClick={dismissPrompt}
+        >
+          Ikke nå
         </button>
       </div>
     </div>
