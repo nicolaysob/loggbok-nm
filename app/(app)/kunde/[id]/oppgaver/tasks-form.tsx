@@ -22,13 +22,11 @@ export type TaskGroup = {
 export function TasksForm({
   customerId,
   groups,
-  defaultDate,
-  defaultTime,
+  defaultDateTime,
 }: {
   customerId: string;
   groups: TaskGroup[];
-  defaultDate: string;
-  defaultTime: string;
+  defaultDateTime: string;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     completeTasks.bind(null, customerId),
@@ -38,41 +36,22 @@ export function TasksForm({
   return (
     <form action={formAction} className="flex flex-col gap-8 pb-4">
       <div className="flex flex-col gap-1.5">
-        <p className={labelClass}>Tidspunkt</p>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="occurredOn" className="text-meta text-navy-700">
-              Dato
-            </label>
-            <input
-              id="occurredOn"
-              name="occurredOn"
-              type="date"
-              required
-              defaultValue={defaultDate}
-              max={defaultDate}
-              className={`${inputClass} min-h-14`}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="occurredTime" className="text-meta text-navy-700">
-              Klokkeslett
-            </label>
-            <input
-              id="occurredTime"
-              name="occurredTime"
-              type="time"
-              required
-              defaultValue={defaultTime}
-              className={`${inputClass} min-h-14`}
-            />
-          </div>
-        </div>
+        <label htmlFor="occurredAt" className={labelClass}>
+          Tidspunkt
+        </label>
+        <input
+          id="occurredAt"
+          name="occurredAt"
+          type="datetime-local"
+          required
+          defaultValue={defaultDateTime}
+          max={defaultDateTime}
+          className={`${inputClass} min-h-14`}
+        />
         <p className="text-meta text-navy-700">
           Nå som standard — endre hvis oppgavene ble gjort et annet tidspunkt.
         </p>
-        <FieldError messages={state?.errors?.occurredOn} />
-        <FieldError messages={state?.errors?.occurredTime} />
+        <FieldError messages={state?.errors?.occurredAt} />
       </div>
 
       {groups.map((group) => (

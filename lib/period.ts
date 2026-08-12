@@ -159,7 +159,9 @@ export function parseYmdKey(value: string): Ymd | null {
   };
 }
 
-/** Dato + klokkeslett for loggføring i Europe/Oslo — ikke frem i tid. */
+/** Dato + klokkeslett for loggføring i Europe/Oslo — ikke frem i tid.
+ *  Godtar «2026-08-13» (midnatt) eller «2026-08-13T14:05» / «2026-08-13T14:05:00».
+ */
 export function occurredAtFromDateAndTime(
   dateValue: string,
   timeValue: string,
@@ -186,6 +188,16 @@ export function occurredAtFromDateAndTime(
   return { at };
 }
 
+/** Parser ett datetime-local-felt («2026-08-13T14:05»). */
+export function occurredAtFromDateTimeLocal(
+  value: string,
+  now: Date = new Date(),
+): { at: Date } | { error: string } {
+  const match = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/.exec(value.trim());
+  if (!match) return { error: "Velg dato og klokkeslett" };
+  return occurredAtFromDateAndTime(match[1], match[2], now);
+}
+
 /** «14:05» i norsk tid — default i tid-felt. */
 export function osloTimeKey(now: Date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -197,6 +209,11 @@ export function osloTimeKey(now: Date = new Date()): string {
   const hour = parts.find((part) => part.type === "hour")?.value ?? "12";
   const minute = parts.find((part) => part.type === "minute")?.value ?? "00";
   return `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
+}
+
+/** «2026-08-13T14:05» til datetime-local i norsk tid. */
+export function osloDateTimeLocalKey(now: Date = new Date()): string {
+  return `${ymdKey(osloYmd(now))}T${osloTimeKey(now)}`;
 }
 
 /** UTC-instant for gitt klokkeslett i Europe/Oslo. */

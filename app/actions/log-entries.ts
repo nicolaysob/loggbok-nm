@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
-import { occurredAtFromDateAndTime } from "@/lib/period";
+import { occurredAtFromDateTimeLocal } from "@/lib/period";
 import { photosFromFormData } from "@/lib/photos";
 import {
   extraWorkSchema,
@@ -107,19 +107,15 @@ export async function createVisitNote(
 
   const result = visitNoteSchema.safeParse({
     comment: formData.get("comment"),
-    occurredOn: formData.get("occurredOn"),
-    occurredTime: formData.get("occurredTime"),
+    occurredAt: formData.get("occurredAt"),
   });
   if (!result.success) {
     return { errors: z.flattenError(result.error).fieldErrors };
   }
 
-  const when = occurredAtFromDateAndTime(
-    result.data.occurredOn,
-    result.data.occurredTime,
-  );
+  const when = occurredAtFromDateTimeLocal(result.data.occurredAt);
   if ("error" in when) {
-    return { errors: { occurredOn: [when.error] } };
+    return { errors: { occurredAt: [when.error] } };
   }
 
   const photoResult = await photosFromFormData(formData);
@@ -168,11 +164,10 @@ export async function completeTasks(
     return { message: "Huk av minst én oppgave." };
   }
 
-  const occurredOn = String(formData.get("occurredOn") ?? "").trim();
-  const occurredTime = String(formData.get("occurredTime") ?? "").trim();
-  const when = occurredAtFromDateAndTime(occurredOn, occurredTime);
+  const occurredAt = String(formData.get("occurredAt") ?? "").trim();
+  const when = occurredAtFromDateTimeLocal(occurredAt);
   if ("error" in when) {
-    return { errors: { occurredOn: [when.error] } };
+    return { errors: { occurredAt: [when.error] } };
   }
 
   await db.logEntry.create({
@@ -200,19 +195,15 @@ export async function createExtraWork(
   const result = extraWorkSchema.safeParse({
     hours: formData.get("hours"),
     comment: formData.get("comment"),
-    occurredOn: formData.get("occurredOn"),
-    occurredTime: formData.get("occurredTime"),
+    occurredAt: formData.get("occurredAt"),
   });
   if (!result.success) {
     return { errors: z.flattenError(result.error).fieldErrors };
   }
 
-  const when = occurredAtFromDateAndTime(
-    result.data.occurredOn,
-    result.data.occurredTime,
-  );
+  const when = occurredAtFromDateTimeLocal(result.data.occurredAt);
   if ("error" in when) {
-    return { errors: { occurredOn: [when.error] } };
+    return { errors: { occurredAt: [when.error] } };
   }
 
   const areaId = await primaryAreaId(customerId);
