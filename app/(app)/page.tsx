@@ -37,27 +37,17 @@ function visitTone(lastVisit: Date | null): {
 export default async function HomePage() {
   const user = await requireUser();
 
+  // Lett kundeliste først — tellere og siste besøk hentes i to groupBy-kall
+  // i stedet for nested take:1 per område (som ble tregt mot Supabase).
   const customers = await db.customer.findMany({
-    // Inaktive kunder er arkivert og hører ikke hjemme i dagslista
     where: { active: true },
     select: {
       id: true,
       name: true,
       areas: {
-        select: {
-          logEntries: {
-            orderBy: { occurredAt: "desc" },
-            take: 1,
-            select: { occurredAt: true },
-          },
-          _count: {
-            select: {
-              issues: {
-                where: { status: { in: ["OPEN", "IN_PROGRESS"] } },
-              },
-            },
-          },
-        },
+        orderBy: { createdAt: "asc" },
+        take: 1,
+        select: { id: true },
       },
       _count: {
         select: {
@@ -68,29 +58,64 @@ export default async function HomePage() {
     },
   });
 
+  const areaIds = customers.flatMap((customer) =>
+    customer.areas.map((area) => area.id),
+  );
+  const customerByArea = new Map(
+    customers.flatMap((customer) =>
+      customer.areas.map((area) => [area.id, customer.id] as const),
+    ),
+  );
+
+  const [lastVisits, openIssueGroups] = await Promise.all([
+    areaIds.length === 0
+      ? Promise.resolve([])
+      : db.logEntry.groupBy({
+          by: ["areaId"],
+          where: { areaId: { in: areaIds } },
+          _max: { occurredAt: true },
+        }),
+    areaIds.length === 0
+      ? Promise.resolve([])
+      : db.issue.groupBy({
+          by: ["areaId"],
+          where: {
+            areaId: { in: areaIds },
+            status: { in: ["OPEN", "IN_PROGRESS"] },
+          },
+          _count: { _all: true },
+        }),
+  ]);
+
+  const lastVisitByCustomer = new Map<string, Date>();
+  for (const row of lastVisits) {
+    const customerId = customerByArea.get(row.areaId);
+    if (!customerId || !row._max.occurredAt) continue;
+    const current = lastVisitByCustomer.get(customerId);
+    if (!current || row._max.occurredAt > current) {
+      lastVisitByCustomer.set(customerId, row._max.occurredAt);
+    }
+  }
+
+  const openIssuesByCustomer = new Map<string, number>();
+  for (const row of openIssueGroups) {
+    const customerId = customerByArea.get(row.areaId);
+    if (!customerId) continue;
+    openIssuesByCustomer.set(
+      customerId,
+      (openIssuesByCustomer.get(customerId) ?? 0) + row._count._all,
+    );
+  }
+
   const sorted = customers
-    .map((customer) => {
-      const visits = customer.areas
-        .map((area) => area.logEntries[0]?.occurredAt)
-        .filter((date) => date !== undefined);
-
-      const openIssues = customer.areas.reduce(
-        (sum, area) => sum + area._count.issues,
-        0,
-      );
-
-      return {
-        id: customer.id,
-        name: customer.name,
-        openIssues,
-        unreadMessages: customer._count.messages,
-        openTodos: customer._count.todos,
-        lastVisit:
-          visits.length === 0
-            ? null
-            : new Date(Math.max(...visits.map((date) => date.getTime()))),
-      };
-    })
+    .map((customer) => ({
+      id: customer.id,
+      name: customer.name,
+      openIssues: openIssuesByCustomer.get(customer.id) ?? 0,
+      unreadMessages: customer._count.messages,
+      openTodos: customer._count.todos,
+      lastVisit: lastVisitByCustomer.get(customer.id) ?? null,
+    }))
     // Avvik øverst, deretter uleste meldinger, deretter eldste besøk
     .sort((a, b) => {
       if (a.openIssues > 0 !== b.openIssues > 0) {
@@ -168,6 +193,7 @@ export default async function HomePage() {
             >
               <Link
                 href={`/kunde/${customer.id}`}
+                prefetch
                 className="flex min-h-16 min-w-0 flex-1 items-center gap-3 py-3.5 pl-4 pr-3 text-navy-900 transition-colors active:bg-navy-50"
               >
                 <span className="min-w-0 flex-1 truncate text-heading">
@@ -203,6 +229,7 @@ export default async function HomePage() {
               {/* Snarvei rett til loggføring — sparer turen innom kundekortet */}
               <Link
                 href={`/kunde/${customer.id}/loggfor`}
+                prefetch
                 aria-label={`Loggfør besøk hos ${customer.name}`}
                 className="flex w-14 shrink-0 items-center justify-center border-l border-line text-brand transition-colors active:bg-brand-50"
               >

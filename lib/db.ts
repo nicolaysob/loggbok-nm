@@ -24,10 +24,10 @@ function getDb() {
   }
 
   const client = createPrismaClient();
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-    globalForPrisma.prismaVersion = PRISMA_VERSION;
-  }
+  // Cache også i produksjon — uten dette lager Proxy-en ny PrismaClient
+  // (og ny pool mot Supabase) på hvert property-oppslag, som gjør sider trege.
+  globalForPrisma.prisma = client;
+  globalForPrisma.prismaVersion = PRISMA_VERSION;
   return client;
 }
 
