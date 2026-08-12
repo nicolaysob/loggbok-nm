@@ -9,9 +9,22 @@ export const ONESIGNAL_APP_ID = "a0c7b9f2-a96a-46b2-a231-fe89711f0cd3";
 
 const DIALOG_SHOWN_KEY = "onesignal-integration-dialog-shown";
 
+function isLocalOrigin(origin: string): boolean {
+  return (
+    origin.startsWith("http://localhost") ||
+    origin.startsWith("https://localhost") ||
+    origin.startsWith("http://127.0.0.1") ||
+    origin.startsWith("https://127.0.0.1")
+  );
+}
+
 /**
  * Initialiserer OneSignal Web SDK én gang i nettleseren.
  * react-onesignal er den sentrale, typede inngangen — ingen ekstra wrapper.
+ *
+ * Merk: Denne OneSignal-appen er konfigurert med Site URL =
+ * https://loggbok-nm-lyart.vercel.app — init på localhost blir avvist
+ * av SDK-et. Push testes derfor på produksjon (eller egen localhost-app).
  */
 export function OneSignalInit({
   externalUserId,
@@ -19,6 +32,7 @@ export function OneSignalInit({
   externalUserId?: string | null;
 }) {
   const started = useRef(false);
+  const [ready, setReady] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
@@ -28,10 +42,19 @@ export function OneSignalInit({
     let cancelled = false;
 
     async function init() {
+      if (typeof window === "undefined") return;
+
+      // Produksjons-appen godtar ikke localhost — ikke init, så unngår Qe-feil
+      if (isLocalOrigin(window.location.origin)) {
+        console.info(
+          "OneSignal: hoppes over på localhost (Site URL er produksjon).",
+        );
+        return;
+      }
+
       try {
         await OneSignal.init({
           appId: ONESIGNAL_APP_ID,
-          // Lar oss teste push på localhost uten HTTPS
           allowLocalhostAsSecureOrigin: true,
         });
       } catch (error) {
@@ -40,18 +63,15 @@ export function OneSignalInit({
       }
 
       if (cancelled) return;
+      setReady(true);
 
       // Bekreftelsesdialog én gang etter at SDK er klar (web: før tillatelse)
-      if (
-        typeof window !== "undefined" &&
-        !sessionStorage.getItem(DIALOG_SHOWN_KEY)
-      ) {
+      if (!sessionStorage.getItem(DIALOG_SHOWN_KEY)) {
         sessionStorage.setItem(DIALOG_SHOWN_KEY, "1");
         setShowDialog(true);
       }
 
-      // Observer bekrefter at enheten er registrert etter opt-in.
-      // På web er id undefined inntil server-tildelt UUID finnes.
+      // På web er id undefined inntil server-tildelt UUID finnes
       const onChange = () => {
         const id = OneSignal.User.PushSubscription.id;
         if (id) {
@@ -69,13 +89,13 @@ export function OneSignalInit({
     };
   }, []);
 
-  // Koble innlogget bruker til OneSignal (ansatt eller kunde)
+  // Koble innlogget bruker først når SDK faktisk er klar
   useEffect(() => {
-    if (!externalUserId) return;
+    if (!ready || !externalUserId) return;
     void OneSignal.login(externalUserId).catch((error) => {
       console.error("OneSignal login feilet:", error);
     });
-  }, [externalUserId]);
+  }, [ready, externalUserId]);
 
   if (!showDialog) return null;
 
