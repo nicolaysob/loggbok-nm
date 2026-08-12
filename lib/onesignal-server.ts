@@ -31,17 +31,21 @@ async function staffExternalIds(excludeUserIds: string[] = []): Promise<string[]
  * Krever ONESIGNAL_REST_API_KEY i miljøvariabler (Vercel + .env).
  * Feiler stille hvis nøkkel mangler eller API ikke svarer — appen skal ikke stoppe.
  */
-export async function notifyStaffPush(payload: PushPayload): Promise<void> {
+async function sendPushToExternalIds(
+  externalIds: string[],
+  payload: Omit<PushPayload, "excludeUserIds">,
+): Promise<{ ok: boolean; detail?: string }> {
   const apiKey = process.env.ONESIGNAL_REST_API_KEY;
   if (!apiKey) {
     console.warn(
       "OneSignal: ONESIGNAL_REST_API_KEY mangler — hopper over push.",
     );
-    return;
+    return { ok: false, detail: "ONESIGNAL_REST_API_KEY mangler" };
   }
 
-  const externalIds = await staffExternalIds(payload.excludeUserIds);
-  if (externalIds.length === 0) return;
+  if (externalIds.length === 0) {
+    return { ok: false, detail: "Ingen mottakere" };
+  }
 
   try {
     const response = await fetch("https://api.onesignal.com/notifications", {
@@ -65,10 +69,30 @@ export async function notifyStaffPush(payload: PushPayload): Promise<void> {
     if (!response.ok) {
       const text = await response.text();
       console.error("OneSignal push feilet:", response.status, text);
+      return { ok: false, detail: text.slice(0, 200) };
     }
+
+    return { ok: true };
   } catch (error) {
     console.error("OneSignal push feilet:", error);
+    return {
+      ok: false,
+      detail: error instanceof Error ? error.message : "Ukjent feil",
+    };
   }
+}
+
+export async function notifyStaffPush(payload: PushPayload): Promise<void> {
+  const externalIds = await staffExternalIds(payload.excludeUserIds);
+  await sendPushToExternalIds(externalIds, payload);
+}
+
+/** Sender push til én bruker (f.eks. testvarsel). */
+export async function notifyUserPush(
+  userId: string,
+  payload: Omit<PushPayload, "excludeUserIds">,
+): Promise<{ ok: boolean; detail?: string }> {
+  return sendPushToExternalIds([userId], payload);
 }
 
 export async function notifyStaffNewCustomerMessage(input: {
