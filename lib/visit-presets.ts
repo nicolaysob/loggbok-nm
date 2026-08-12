@@ -8,11 +8,18 @@ export type VisitPresetSimple = {
 
 export type VisitPresetGroup = {
   kind: "group";
+  /** Knappetekst i UI */
   label: string;
+  /** Overskrift som skrives i loggen når noe er valgt */
+  header: string;
   items: readonly string[];
 };
 
 export type VisitPreset = VisitPresetSimple | VisitPresetGroup;
+
+export function groupItemLine(item: string): string {
+  return `- ${item}`;
+}
 
 export const visitPresets: readonly VisitPreset[] = [
   { kind: "simple", text: "Rutinerunde — alt i orden" },
@@ -21,6 +28,7 @@ export const visitPresets: readonly VisitPreset[] = [
   {
     kind: "group",
     label: "Full vask",
+    header: "Renhold utført",
     items: [
       "Butikk",
       "Lager",

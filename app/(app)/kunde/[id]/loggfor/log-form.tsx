@@ -3,7 +3,11 @@
 import { useActionState, useState } from "react";
 import type { FormState } from "@/lib/validation";
 import { createVisitNote } from "@/app/actions/log-entries";
-import { visitPresets } from "@/lib/visit-presets";
+import {
+  groupItemLine,
+  visitPresets,
+  type VisitPresetGroup,
+} from "@/lib/visit-presets";
 import { PhotoPicker } from "@/components/photo-picker";
 import { ImproveTextButton } from "@/components/improve-text-button";
 import {
@@ -28,7 +32,6 @@ export function LogForm({ customerId }: { customerId: string }) {
   );
   const [comment, setComment] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
-  // Hvilke hurtigvalg-grupper som er åpnet (f.eks. Vask utført)
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
 
   function togglePreset(text: string) {
@@ -38,6 +41,35 @@ export function LogForm({ customerId }: { customerId: string }) {
         return lines.filter((line) => line !== text).join("\n");
       }
       return [...lines, text].join("\n");
+    });
+  }
+
+  // Bygger blokken: «Renhold utført» + valgte «- Butikk» osv.
+  function toggleGroupItem(group: VisitPresetGroup, item: string) {
+    setComment((current) => {
+      const lines = commentLines(current);
+      const bulletLines = new Set(group.items.map(groupItemLine));
+      const other = lines.filter(
+        (line) => line !== group.header && !bulletLines.has(line),
+      );
+
+      const selected = new Set(
+        group.items.filter((entry) => lines.includes(groupItemLine(entry))),
+      );
+      if (selected.has(item)) selected.delete(item);
+      else selected.add(item);
+
+      if (selected.size === 0) {
+        return other.join("\n");
+      }
+
+      const block = [
+        group.header,
+        ...group.items
+          .filter((entry) => selected.has(entry))
+          .map(groupItemLine),
+      ];
+      return [...other, ...block].join("\n");
     });
   }
 
@@ -89,7 +121,7 @@ export function LogForm({ customerId }: { customerId: string }) {
 
             const open = openGroups.has(preset.label);
             const selectedCount = preset.items.filter((item) =>
-              activePresets.has(item),
+              activePresets.has(groupItemLine(item)),
             ).length;
             const groupActive = selectedCount > 0;
 
@@ -118,13 +150,13 @@ export function LogForm({ customerId }: { customerId: string }) {
                 {open && (
                   <div className="flex flex-wrap gap-2 rounded-md border border-line bg-navy-50/60 p-3">
                     {preset.items.map((item) => {
-                      const active = activePresets.has(item);
+                      const active = activePresets.has(groupItemLine(item));
                       return (
                         <button
                           key={item}
                           type="button"
                           aria-pressed={active}
-                          onClick={() => togglePreset(item)}
+                          onClick={() => toggleGroupItem(preset, item)}
                           className={`min-h-12 rounded-md px-4 text-meta font-semibold transition-all duration-150 ${
                             active
                               ? "border border-brand bg-brand-50 text-green-700"
