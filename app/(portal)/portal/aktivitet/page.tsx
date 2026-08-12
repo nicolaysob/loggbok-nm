@@ -53,7 +53,7 @@ export default async function PortalActivityArchivePage({
     <div className="flex animate-rise flex-col gap-6">
       <div className="flex flex-col gap-2">
         <Link href="/portal" className={backLinkClass}>
-          ← Tilbake
+          ← Forside
         </Link>
         <h1 className="text-display tracking-tight text-navy-900">
           Aktivitetsarkiv

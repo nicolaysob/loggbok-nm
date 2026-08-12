@@ -21,8 +21,13 @@ export default async function PortalLayout({
             aria-label="Kundeportal hjem"
           >
             <BrandIcon size={28} className="size-7" />
-            <span className="truncate text-[1.05rem] font-semibold tracking-tight text-navy-900">
-              Loggbok
+            <span className="flex min-w-0 flex-col leading-tight">
+              <span className="truncate text-[1.05rem] font-semibold tracking-tight text-navy-900">
+                N&amp;M
+              </span>
+              <span className="truncate text-[0.7rem] font-medium text-navy-700">
+                Kundeportal
+              </span>
             </span>
           </Link>
 

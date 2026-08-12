@@ -68,6 +68,8 @@ export async function setIssueStatus(issueId: string, status: IssueStatus) {
 
   revalidatePath(`/kunde/${issue.area.customerId}`);
   revalidatePath(`/kunde/${issue.area.customerId}/avvik`);
+  revalidatePath("/portal");
+  revalidatePath("/portal/avvik");
   revalidatePath("/");
   revalidatePath("/uke");
 }

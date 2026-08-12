@@ -218,3 +218,47 @@ export async function listCustomerMessageMonths(
     })
     .sort((a, b) => b.year - a.year || b.month - a.month);
 }
+
+export type ClosedIssueMonthFolder = ActivityMonthFolder;
+
+/** Lukkede avvik gruppert etter closedAt (fallback: updatedAt). */
+export async function listCustomerClosedIssueMonths(
+  customerId: string,
+): Promise<ClosedIssueMonthFolder[]> {
+  const rows = await db.issue.findMany({
+    where: {
+      area: { customerId },
+      status: "CLOSED",
+    },
+    select: { closedAt: true, updatedAt: true },
+  });
+
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const at = row.closedAt ?? row.updatedAt;
+    const { year, month } = osloYmd(at);
+    const key = yearMonthParam(year, month);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  const now = currentMonth();
+  const currentKey = yearMonthParam(now.year, now.month);
+  if (!counts.has(currentKey)) {
+    counts.set(currentKey, 0);
+  }
+
+  return [...counts.entries()]
+    .map(([param, count]) => {
+      const [year, month] = param.split("-").map(Number);
+      const period = calendarMonth(year, month);
+      return {
+        year,
+        month,
+        param,
+        label: period.label,
+        count,
+        isCurrent: param === currentKey,
+      };
+    })
+    .sort((a, b) => b.year - a.year || b.month - a.month);
+}
