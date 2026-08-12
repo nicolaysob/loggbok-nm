@@ -3,12 +3,10 @@ import { redirect } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 import { getCurrentUser } from "@/lib/dal";
 import { BrandIcon } from "@/components/brand";
+import { DesktopNav } from "@/components/desktop-nav";
 import { MobileNav, type AppNavGroup } from "@/components/mobile-nav";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { outlineActionClass } from "@/lib/ui";
-
-const desktopLinkClass =
-  "text-meta font-medium text-navy-700 transition-colors hover:text-navy-900";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const user = await getCurrentUser();
@@ -52,7 +50,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="sticky top-0 z-30 border-b border-line bg-white/85 backdrop-blur-xl">
-        <div className="relative mx-auto w-full max-w-5xl">
+        <div className="relative mx-auto w-full max-w-5xl sm:max-w-6xl">
+          {/* Mobil — uendret */}
           <div className="flex h-14 items-center justify-between gap-3 px-4 sm:hidden">
             <Link
               href="/"
@@ -67,26 +66,27 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <MobileNav groups={groups} />
           </div>
 
-          <div className="hidden items-center justify-between gap-3 px-4 py-2.5 sm:flex">
+          {/* Desktop kontor */}
+          <div className="hidden items-center justify-between gap-4 px-4 py-3 sm:flex">
             <Link
               href="/"
               className="flex min-h-11 min-w-0 items-center gap-2.5"
               aria-label="Loggbok hjem"
             >
-              <BrandIcon size={30} className="size-8" />
-              <span className="truncate text-meta font-semibold text-navy-900">
+              <BrandIcon size={32} className="size-8" />
+              <span className="truncate text-heading font-semibold tracking-tight text-navy-900">
                 Loggbok
               </span>
             </Link>
 
             <div className="flex shrink-0 items-center gap-3">
-              <span className="max-w-40 truncate text-meta text-navy-700">
+              <span className="max-w-48 truncate text-body text-navy-700">
                 {user?.name}
               </span>
               <form action={logout}>
                 <button
                   type="submit"
-                  className={`min-h-10 rounded-md px-3 text-meta font-medium ${outlineActionClass}`}
+                  className={`min-h-11 rounded-md px-4 text-body font-medium ${outlineActionClass}`}
                 >
                   Logg ut
                 </button>
@@ -94,23 +94,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             </div>
           </div>
 
-          <nav className="hidden flex-wrap items-center gap-x-1 gap-y-1 border-t border-line px-3 py-1.5 sm:flex">
-            {groups.map((group) =>
-              group.links.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`${desktopLinkClass} rounded-md px-2.5 py-1.5`}
-                >
-                  {link.label}
-                </Link>
-              )),
-            )}
-          </nav>
+          <DesktopNav groups={groups} />
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-8">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:max-w-6xl sm:py-8">
         <PullToRefresh>{children}</PullToRefresh>
       </main>
     </div>
