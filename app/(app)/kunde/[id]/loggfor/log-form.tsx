@@ -28,9 +28,11 @@ function commentLines(comment: string): string[] {
 export function LogForm({
   customerId,
   defaultDate,
+  defaultTime,
 }: {
   customerId: string;
   defaultDate: string;
+  defaultTime: string;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     createVisitNote.bind(null, customerId),
@@ -102,22 +104,41 @@ export function LogForm({
   return (
     <form action={submit} className="flex flex-col gap-4 pb-4">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="occurredOn" className={labelClass}>
-          Dato
-        </label>
-        <input
-          id="occurredOn"
-          name="occurredOn"
-          type="date"
-          required
-          defaultValue={defaultDate}
-          max={defaultDate}
-          className={`${inputClass} min-h-14`}
-        />
+        <p className={labelClass}>Tidspunkt</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="occurredOn" className="text-meta text-navy-700">
+              Dato
+            </label>
+            <input
+              id="occurredOn"
+              name="occurredOn"
+              type="date"
+              required
+              defaultValue={defaultDate}
+              max={defaultDate}
+              className={`${inputClass} min-h-14`}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="occurredTime" className="text-meta text-navy-700">
+              Klokkeslett
+            </label>
+            <input
+              id="occurredTime"
+              name="occurredTime"
+              type="time"
+              required
+              defaultValue={defaultTime}
+              className={`${inputClass} min-h-14`}
+            />
+          </div>
+        </div>
         <p className="text-meta text-navy-700">
-          I dag som standard — endre hvis besøket var en annen dag.
+          Nå som standard — endre hvis besøket var et annet tidspunkt.
         </p>
         <FieldError messages={state?.errors?.occurredOn} />
+        <FieldError messages={state?.errors?.occurredTime} />
       </div>
 
       <div className="flex flex-col gap-2">

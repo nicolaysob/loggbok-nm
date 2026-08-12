@@ -31,6 +31,9 @@ export const visitNoteSchema = z.object({
   occurredOn: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Velg dato" }),
+  occurredTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, { error: "Velg klokkeslett" }),
 });
 
 export const extraWorkSchema = z.object({
@@ -45,6 +48,9 @@ export const extraWorkSchema = z.object({
   occurredOn: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Velg dato" }),
+  occurredTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, { error: "Velg klokkeslett" }),
 });
 
 export const issueSchema = z.object({

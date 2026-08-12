@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
+import { osloTimeKey, osloYmd, ymdKey } from "@/lib/period";
 import { backLinkClass } from "@/lib/ui";
-import { osloYmd, ymdKey } from "@/lib/period";
 import { LogForm } from "./log-form";
 
 export default async function LogVisitPage({
@@ -19,7 +19,7 @@ export default async function LogVisitPage({
 
   if (!customer) notFound();
 
-  const todayKey = ymdKey(osloYmd(new Date()));
+  const now = new Date();
 
   return (
     <div className="flex flex-col gap-4">
@@ -30,7 +30,11 @@ export default async function LogVisitPage({
         <h1 className="text-display tracking-tight">Loggfør besøk</h1>
       </div>
 
-      <LogForm customerId={customer.id} defaultDate={todayKey} />
+      <LogForm
+        customerId={customer.id}
+        defaultDate={ymdKey(osloYmd(now))}
+        defaultTime={osloTimeKey(now)}
+      />
     </div>
   );
 }

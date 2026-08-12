@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
-import { osloYmd, ymdKey } from "@/lib/period";
+import { osloTimeKey, osloYmd, ymdKey } from "@/lib/period";
 import { backLinkClass } from "@/lib/ui";
 import { HoursForm } from "./hours-form";
 
@@ -19,7 +19,7 @@ export default async function ExtraWorkPage({
 
   if (!customer) notFound();
 
-  const todayKey = ymdKey(osloYmd(new Date()));
+  const now = new Date();
 
   return (
     <div className="flex flex-col gap-4">
@@ -30,7 +30,11 @@ export default async function ExtraWorkPage({
         <h1 className="text-display tracking-tight">Timeregistrering</h1>
       </div>
 
-      <HoursForm customerId={customer.id} defaultDate={todayKey} />
+      <HoursForm
+        customerId={customer.id}
+        defaultDate={ymdKey(osloYmd(now))}
+        defaultTime={osloTimeKey(now)}
+      />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
-import { occurredAtFromYmdKey } from "@/lib/period";
+import { occurredAtFromDateAndTime } from "@/lib/period";
 import { photosFromFormData } from "@/lib/photos";
 import {
   extraWorkSchema,
@@ -108,12 +108,16 @@ export async function createVisitNote(
   const result = visitNoteSchema.safeParse({
     comment: formData.get("comment"),
     occurredOn: formData.get("occurredOn"),
+    occurredTime: formData.get("occurredTime"),
   });
   if (!result.success) {
     return { errors: z.flattenError(result.error).fieldErrors };
   }
 
-  const when = occurredAtFromYmdKey(result.data.occurredOn);
+  const when = occurredAtFromDateAndTime(
+    result.data.occurredOn,
+    result.data.occurredTime,
+  );
   if ("error" in when) {
     return { errors: { occurredOn: [when.error] } };
   }
@@ -165,7 +169,8 @@ export async function completeTasks(
   }
 
   const occurredOn = String(formData.get("occurredOn") ?? "").trim();
-  const when = occurredAtFromYmdKey(occurredOn);
+  const occurredTime = String(formData.get("occurredTime") ?? "").trim();
+  const when = occurredAtFromDateAndTime(occurredOn, occurredTime);
   if ("error" in when) {
     return { errors: { occurredOn: [when.error] } };
   }
@@ -196,12 +201,16 @@ export async function createExtraWork(
     hours: formData.get("hours"),
     comment: formData.get("comment"),
     occurredOn: formData.get("occurredOn"),
+    occurredTime: formData.get("occurredTime"),
   });
   if (!result.success) {
     return { errors: z.flattenError(result.error).fieldErrors };
   }
 
-  const when = occurredAtFromYmdKey(result.data.occurredOn);
+  const when = occurredAtFromDateAndTime(
+    result.data.occurredOn,
+    result.data.occurredTime,
+  );
   if ("error" in when) {
     return { errors: { occurredOn: [when.error] } };
   }

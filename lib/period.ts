@@ -159,17 +159,94 @@ export function parseYmdKey(value: string): Ymd | null {
   };
 }
 
-/** Dato for loggføring — ikke frem i tid. Returnerer midnatt Oslo. */
-export function occurredAtFromYmdKey(
-  value: string,
+/** Dato + klokkeslett for loggføring i Europe/Oslo — ikke frem i tid. */
+export function occurredAtFromDateAndTime(
+  dateValue: string,
+  timeValue: string,
   now: Date = new Date(),
 ): { at: Date } | { error: string } {
-  const ymd = parseYmdKey(value);
+  const ymd = parseYmdKey(dateValue);
   if (!ymd) return { error: "Velg en gyldig dato" };
+
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(timeValue.trim());
+  if (!timeMatch) return { error: "Velg klokkeslett" };
+  const hour = Number(timeMatch[1]);
+  const minute = Number(timeMatch[2]);
+  if (hour > 23 || minute > 59) return { error: "Velg klokkeslett" };
+
   if (ymdKey(ymd) > ymdKey(osloYmd(now))) {
     return { error: "Datoen kan ikke være i fremtiden" };
   }
-  return { at: osloMidnight(ymd.year, ymd.month, ymd.day) };
+
+  const at = osloDateTime(ymd.year, ymd.month, ymd.day, hour, minute);
+  // Ett minutts slack for treg lagring / klokkeforskjell
+  if (at.getTime() > now.getTime() + 60_000) {
+    return { error: "Tidspunktet kan ikke være i fremtiden" };
+  }
+  return { at };
+}
+
+/** «14:05» i norsk tid — default i tid-felt. */
+export function osloTimeKey(now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Oslo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const hour = parts.find((part) => part.type === "hour")?.value ?? "12";
+  const minute = parts.find((part) => part.type === "minute")?.value ?? "00";
+  return `${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
+}
+
+/** UTC-instant for gitt klokkeslett i Europe/Oslo. */
+export function osloDateTime(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+): Date {
+  const candidate = Date.UTC(year, month - 1, day, hour, minute);
+
+  for (let step = -14; step <= 14; step++) {
+    const probe = new Date(candidate + step * 3_600_000);
+    const local = osloYmd(probe);
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Oslo",
+      hour: "numeric",
+      minute: "numeric",
+      hourCycle: "h23",
+    }).formatToParts(probe);
+    const localHour = Number(
+      parts.find((part) => part.type === "hour")?.value,
+    );
+    const localMinute = Number(
+      parts.find((part) => part.type === "minute")?.value,
+    );
+
+    if (
+      local.year === year &&
+      local.month === month &&
+      local.day === day &&
+      localHour === hour &&
+      localMinute === minute
+    ) {
+      return new Date(
+        Date.UTC(
+          probe.getUTCFullYear(),
+          probe.getUTCMonth(),
+          probe.getUTCDate(),
+          probe.getUTCHours(),
+          probe.getUTCMinutes(),
+          0,
+          0,
+        ),
+      );
+    }
+  }
+
+  return new Date(candidate);
 }
 
 export function addCalendarDays(ymd: Ymd, delta: number): Ymd {
