@@ -67,26 +67,26 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </div>
 
           {/* Desktop kontor */}
-          <div className="hidden items-center justify-between gap-4 px-4 py-3 sm:flex">
+          <div className="hidden items-center justify-between gap-4 px-4 py-2.5 sm:flex">
             <Link
               href="/"
-              className="flex min-h-11 min-w-0 items-center gap-2.5"
+              className="flex min-h-10 min-w-0 items-center gap-2.5"
               aria-label="Loggbok hjem"
             >
-              <BrandIcon size={32} className="size-8" />
-              <span className="truncate text-heading font-semibold tracking-tight text-navy-900">
+              <BrandIcon size={28} className="size-7" />
+              <span className="truncate text-meta font-semibold tracking-tight text-navy-900">
                 Loggbok
               </span>
             </Link>
 
             <div className="flex shrink-0 items-center gap-3">
-              <span className="max-w-48 truncate text-body text-navy-700">
+              <span className="max-w-48 truncate text-meta text-navy-700">
                 {user?.name}
               </span>
               <form action={logout}>
                 <button
                   type="submit"
-                  className={`min-h-11 rounded-md px-4 text-body font-medium ${outlineActionClass}`}
+                  className={`min-h-9 rounded-md px-3 text-meta font-medium ${outlineActionClass}`}
                 >
                   Logg ut
                 </button>
