@@ -5,6 +5,7 @@ import type { FormState } from "@/lib/validation";
 import { createVisitNote } from "@/app/actions/log-entries";
 import { visitPresets } from "@/lib/visit-presets";
 import { PhotoPicker } from "@/components/photo-picker";
+import { ImproveTextButton } from "@/components/improve-text-button";
 import {
   FieldError,
   StickySubmit,
@@ -90,6 +91,8 @@ export function LogForm({ customerId }: { customerId: string }) {
         onChange={(event) => setComment(event.target.value)}
         className={textareaClass}
       />
+
+      <ImproveTextButton text={comment} onImproved={setComment} />
 
       <FieldError messages={state?.errors?.comment} />
 
