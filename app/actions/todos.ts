@@ -38,7 +38,7 @@ export async function createTodo(
     select: { name: true },
   });
   if (customer) {
-    void notifyStaffNewTodo({
+    await notifyStaffNewTodo({
       customerId,
       customerName: customer.name,
       text: result.data.text,
@@ -101,7 +101,7 @@ export async function convertIssueToTodo(issueId: string) {
     select: { name: true },
   });
   if (customer) {
-    void notifyStaffNewTodo({
+    await notifyStaffNewTodo({
       customerId: issue.area.customerId,
       customerName: customer.name,
       text: issue.description,

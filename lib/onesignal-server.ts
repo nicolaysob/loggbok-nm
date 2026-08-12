@@ -72,6 +72,25 @@ async function sendPushToExternalIds(
       return { ok: false, detail: text.slice(0, 200) };
     }
 
+    const result = (await response.json()) as {
+      id?: string;
+      errors?: unknown;
+      recipients?: number;
+    };
+    if (result.errors) {
+      console.error("OneSignal push advarsler:", result.errors);
+    }
+    if (typeof result.recipients === "number" && result.recipients === 0) {
+      console.warn(
+        "OneSignal: 0 mottakere — ingen abonnenter koblet til external_id.",
+        { externalIds, notificationId: result.id },
+      );
+      return {
+        ok: false,
+        detail: "0 mottakere (mangler push-abonnement på telefon)",
+      };
+    }
+
     return { ok: true };
   } catch (error) {
     console.error("OneSignal push feilet:", error);

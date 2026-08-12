@@ -36,8 +36,8 @@ export async function createCustomerMessage(
     },
   });
 
-  // Push til ansatte — feiler ikke lagringen hvis OneSignal er nede
-  void notifyStaffNewCustomerMessage({
+  // Må await-es — void på Vercel dreper kallet før push rekker å gå ut
+  await notifyStaffNewCustomerMessage({
     customerId: customer.id,
     customerName: customer.name,
     preview: result.data.body,

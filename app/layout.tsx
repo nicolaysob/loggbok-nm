@@ -51,7 +51,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sourceSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <OneSignalInit externalUserId={user?.id ?? null} />
+        <OneSignalInit
+          externalUserId={
+            user && (user.role === "ADMIN" || user.role === "EMPLOYEE")
+              ? user.id
+              : null
+          }
+        />
         {children}
       </body>
     </html>

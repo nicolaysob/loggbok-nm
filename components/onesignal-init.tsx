@@ -95,7 +95,9 @@ export function OneSignalInit({
     };
   }, []);
 
-  // Koble innlogget bruker først når SDK faktisk er klar
+  // Koble innlogget ansatt først når SDK er klar.
+  // Kunder skal ikke OneSignal.login — det ville stjele push-abonnementet
+  // hvis samme telefon brukes til både portal og internapp.
   useEffect(() => {
     if (!ready || !externalUserId) return;
     void OneSignal.login(externalUserId).catch((error) => {
@@ -108,7 +110,8 @@ export function OneSignalInit({
     setShowDialog(false);
   }
 
-  if (!showDialog) return null;
+  // Ingen prompt uten innlogget ansatt (kundeportalen skal ikke spørre)
+  if (!showDialog || !externalUserId) return null;
 
   return (
     <div
@@ -133,7 +136,11 @@ export function OneSignalInit({
           className={`mt-5 min-h-14 w-full rounded-md px-4 text-body font-semibold ${solidActionClass}`}
           onClick={() => {
             dismissPrompt();
-            void OneSignal.Notifications.requestPermission();
+            void OneSignal.Notifications.requestPermission().then(() => {
+              if (externalUserId) {
+                return OneSignal.login(externalUserId);
+              }
+            });
           }}
         >
           Tillat varsler
