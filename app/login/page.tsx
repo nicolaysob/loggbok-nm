@@ -3,7 +3,7 @@ import { BrandLogo } from "@/components/brand";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
-  title: "Logg inn – Loggbok",
+  title: "Logg inn – N&M",
 };
 
 export default function LoginPage() {
@@ -13,10 +13,10 @@ export default function LoginPage() {
         <header className="mb-8">
           <BrandLogo priority className="w-[11.5rem]" />
           <h1 className="mt-8 text-display tracking-tight text-navy-900">
-            Loggbok
+            Logg inn
           </h1>
           <p className="mt-1.5 text-body text-navy-700">
-            Intern registrering for N&amp;M Vaktmesterservice
+            For ansatte og kunder hos N&amp;M Vaktmesterservice
           </p>
         </header>
 
