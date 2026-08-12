@@ -87,14 +87,6 @@ export async function notifyStaffPush(payload: PushPayload): Promise<void> {
   await sendPushToExternalIds(externalIds, payload);
 }
 
-/** Sender push til én bruker (f.eks. testvarsel). */
-export async function notifyUserPush(
-  userId: string,
-  payload: Omit<PushPayload, "excludeUserIds">,
-): Promise<{ ok: boolean; detail?: string }> {
-  return sendPushToExternalIds([userId], payload);
-}
-
 export async function notifyStaffNewCustomerMessage(input: {
   customerId: string;
   customerName: string;

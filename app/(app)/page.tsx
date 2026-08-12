@@ -2,7 +2,6 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { daysSince, formatLastVisit } from "@/lib/time";
-import { TestPushButton } from "@/components/test-push-button";
 
 function visitTone(lastVisit: Date | null): {
   label: string;
@@ -177,8 +176,6 @@ export default async function HomePage() {
               : " De som har ventet lengst står øverst."}
         </p>
       </div>
-
-      {user.role === "ADMIN" && <TestPushButton />}
 
       <ul className="divide-y divide-line overflow-hidden rounded-md border border-line bg-white shadow-card">
         {sorted.map((customer) => {
