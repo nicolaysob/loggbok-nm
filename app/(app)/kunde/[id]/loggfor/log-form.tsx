@@ -14,6 +14,13 @@ import {
 } from "@/components/mobile-form";
 import { outlineActionClass } from "@/lib/ui";
 
+function commentLines(comment: string): string[] {
+  return comment
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 export function LogForm({ customerId }: { customerId: string }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     createVisitNote.bind(null, customerId),
@@ -21,15 +28,12 @@ export function LogForm({ customerId }: { customerId: string }) {
   );
   const [comment, setComment] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
+  // Hvilke hurtigvalg-grupper som er åpnet (f.eks. Vask utført)
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
 
-  // Hurtigvalg fungerer som av/på — ett trykk legger til linjen,
-  // ett trykk til fjerner den. Da holder hurtigvalg alene for å lagre.
   function togglePreset(text: string) {
     setComment((current) => {
-      const lines = current
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean);
+      const lines = commentLines(current);
       if (lines.includes(text)) {
         return lines.filter((line) => line !== text).join("\n");
       }
@@ -37,12 +41,16 @@ export function LogForm({ customerId }: { customerId: string }) {
     });
   }
 
-  const activePresets = new Set(
-    comment
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean),
-  );
+  function toggleGroupOpen(label: string) {
+    setOpenGroups((current) => {
+      const next = new Set(current);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  }
+
+  const activePresets = new Set(commentLines(comment));
 
   function submit(formData: FormData) {
     formData.set("comment", comment);
@@ -59,22 +67,78 @@ export function LogForm({ customerId }: { customerId: string }) {
         <p className={labelClass}>Hurtigvalg</p>
         <div className="flex flex-wrap gap-2">
           {visitPresets.map((preset) => {
-            const active = activePresets.has(preset);
+            if (preset.kind === "simple") {
+              const active = activePresets.has(preset.text);
+              return (
+                <button
+                  key={preset.text}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => togglePreset(preset.text)}
+                  className={`min-h-12 rounded-md px-4 text-meta font-semibold transition-all duration-150 ${
+                    active
+                      ? "border border-brand bg-brand-50 text-green-700"
+                      : outlineActionClass
+                  }`}
+                >
+                  {active ? "✓ " : ""}
+                  {preset.text}
+                </button>
+              );
+            }
+
+            const open = openGroups.has(preset.label);
+            const selectedCount = preset.items.filter((item) =>
+              activePresets.has(item),
+            ).length;
+            const groupActive = selectedCount > 0;
+
             return (
-              <button
-                key={preset}
-                type="button"
-                aria-pressed={active}
-                onClick={() => togglePreset(preset)}
-                className={`min-h-12 rounded-md px-4 text-meta font-semibold transition-all duration-150 ${
-                  active
-                    ? "border border-brand bg-brand-50 text-green-700"
-                    : outlineActionClass
-                }`}
-              >
-                {active ? "✓ " : ""}
-                {preset}
-              </button>
+              <div key={preset.label} className="flex w-full flex-col gap-2">
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  onClick={() => toggleGroupOpen(preset.label)}
+                  className={`flex min-h-12 w-full items-center justify-between rounded-md px-4 text-left text-meta font-semibold transition-all duration-150 ${
+                    groupActive
+                      ? "border border-brand bg-brand-50 text-green-700"
+                      : outlineActionClass
+                  }`}
+                >
+                  <span>
+                    {groupActive ? "✓ " : ""}
+                    {preset.label}
+                    {groupActive ? ` (${selectedCount})` : ""}
+                  </span>
+                  <span aria-hidden className="text-heading text-navy-100">
+                    {open ? "▾" : "›"}
+                  </span>
+                </button>
+
+                {open && (
+                  <div className="flex flex-wrap gap-2 rounded-md border border-line bg-navy-50/60 p-3">
+                    {preset.items.map((item) => {
+                      const active = activePresets.has(item);
+                      return (
+                        <button
+                          key={item}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => togglePreset(item)}
+                          className={`min-h-12 rounded-md px-4 text-meta font-semibold transition-all duration-150 ${
+                            active
+                              ? "border border-brand bg-brand-50 text-green-700"
+                              : outlineActionClass
+                          }`}
+                        >
+                          {active ? "✓ " : ""}
+                          {item}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
