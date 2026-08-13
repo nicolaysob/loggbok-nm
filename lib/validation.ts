@@ -183,6 +183,23 @@ export const timeEntrySchema = z.object({
   comment: z.string().trim().min(1, { error: "Skriv en kort kommentar" }),
 });
 
+// Avslutt stempling — timer kan komme fra klokken eller justeres manuelt
+export const stopTimeClockSchema = z.object({
+  hours: z.preprocess(
+    (value) => {
+      const raw = String(value ?? "").trim();
+      if (raw === "") return undefined;
+      return parseDecimal(raw);
+    },
+    z
+      .number({ error: "Fyll inn antall timer" })
+      .min(0.5, { error: "Minst 0,5 time" })
+      .max(24, { error: "Maks 24 timer per registrering" })
+      .optional(),
+  ),
+  comment: z.string().trim().min(1, { error: "Skriv en kort kommentar" }),
+});
+
 export type FormState =
   | {
       errors?: Record<string, string[] | undefined>;

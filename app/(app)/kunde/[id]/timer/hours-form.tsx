@@ -11,7 +11,6 @@ import {
 } from "@/components/mobile-form";
 import {
   labelClass,
-  noticeClass,
   outlineActionClass,
   textareaClass,
   inputClass,
@@ -35,10 +34,6 @@ export function HoursForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-8 pb-4">
-      <p className={noticeClass}>
-        Kun for arbeid utover kontrakten. Disse timene faktureres.
-      </p>
-
       <section className="flex flex-col gap-1.5">
         <label htmlFor="occurredAt" className={labelClass}>
           Tidspunkt
@@ -52,9 +47,6 @@ export function HoursForm({
           max={defaultDateTime}
           className={`${inputClass} min-h-14`}
         />
-        <p className="text-meta text-navy-700">
-          Nå som standard — endre hvis arbeidet var et annet tidspunkt.
-        </p>
         <FieldError messages={state?.errors?.occurredAt} />
       </section>
 

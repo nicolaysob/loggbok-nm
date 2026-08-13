@@ -9,7 +9,7 @@ import {
 } from "@/components/mobile-form";
 import { formatHours } from "@/lib/format";
 import type { FormState } from "@/lib/validation";
-import { inputClass, labelClass, noticeClass, textareaClass } from "@/lib/ui";
+import { inputClass, labelClass, textareaClass } from "@/lib/ui";
 
 export function TimeEntryForm({ defaultDate }: { defaultDate: string }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
@@ -20,10 +20,6 @@ export function TimeEntryForm({ defaultDate }: { defaultDate: string }) {
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
-      <p className={noticeClass}>
-        Før inn timer for lønn her. Admin ser det under Lønn.
-      </p>
-
       <section className="flex flex-col gap-3">
         <label htmlFor="workedOn" className={labelClass}>
           Dato

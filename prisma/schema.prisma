@@ -50,6 +50,12 @@ enum PayType {
   HOURLY
 }
 
+// Aktiv stempling: lønnstimer eller fakturerbart ekstraarbeid
+enum TimeClockKind {
+  PAYROLL
+  EXTRA_WORK
+}
+
 // Hvordan et kundeoppdrag gjentas i kalenderen
 enum JobScheduleKind {
   ONCE
@@ -71,10 +77,11 @@ model Customer {
   annualValue   Decimal      @db.Decimal(10, 2)
   active        Boolean      @default(true)
 
-  areas    Area[]
+  areas      Area[]
   portalUsers User[]
-  messages CustomerMessage[]
-  todos    Todo[]
+  messages   CustomerMessage[]
+  todos      Todo[]
+  timeClocks TimeClock[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -255,6 +262,7 @@ model User {
   issues         Issue[]
   jobCompletions JobCompletion[]
   timeEntries    TimeEntry[]
+  timeClocks     TimeClock[]
   messages       CustomerMessage[] @relation("CustomerMessageSender")
   signedMessages CustomerMessage[] @relation("CustomerMessageSigner")
   todosCreated   Todo[]            @relation("TodoCreator")
@@ -262,6 +270,24 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+}
+
+// Åpen stempling — én per bruker. Slettes når man avslutter eller avbryter.
+// kind + customerId håndheves også med CHECK i migrasjonen.
+model TimeClock {
+  id         String        @id @default(cuid())
+  userId     String        @unique
+  kind       TimeClockKind
+  // Kun EXTRA_WORK — hvilken kunde stemplingen gjelder
+  customerId String?
+  startedAt  DateTime      @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 
   @@index([customerId])
 }

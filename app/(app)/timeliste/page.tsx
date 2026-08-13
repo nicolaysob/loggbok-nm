@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getOpenTimeClock } from "@/app/actions/time-clock";
 import { db } from "@/lib/db";
 import { requireHourlyUser } from "@/lib/dal";
 import { decimalToNumber, formatHours } from "@/lib/format";
@@ -13,6 +14,8 @@ import {
 } from "@/lib/period";
 import { formatDate } from "@/lib/time";
 import { backLinkClass, cardStaticClass } from "@/lib/ui";
+import { ManualEntryDisclosure } from "@/components/manual-entry-disclosure";
+import { TimeClockPanel } from "@/components/time-clock-panel";
 import { TimeEntryForm } from "./time-entry-form";
 
 export default async function TimeSheetPage({
@@ -30,19 +33,22 @@ export default async function TimeSheetPage({
   const isCurrent = weekParam(monday) === weekParam(thisMonday);
   const todayKey = ymdKey(osloYmd(new Date()));
 
-  const entries = await db.timeEntry.findMany({
-    where: {
-      userId: user.id,
-      workedOn: { gte: week.start, lt: week.end },
-    },
-    orderBy: [{ workedOn: "desc" }, { createdAt: "desc" }],
-    select: {
-      id: true,
-      hours: true,
-      comment: true,
-      workedOn: true,
-    },
-  });
+  const [entries, openClockRow] = await Promise.all([
+    db.timeEntry.findMany({
+      where: {
+        userId: user.id,
+        workedOn: { gte: week.start, lt: week.end },
+      },
+      orderBy: [{ workedOn: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        hours: true,
+        comment: true,
+        workedOn: true,
+      },
+    }),
+    getOpenTimeClock(),
+  ]);
 
   const rows = entries.map((entry) => ({
     id: entry.id,
@@ -52,6 +58,15 @@ export default async function TimeSheetPage({
   }));
 
   const totalHours = rows.reduce((sum, row) => sum + row.hours, 0);
+
+  const openClock = openClockRow
+    ? {
+        kind: openClockRow.kind,
+        customerId: openClockRow.customerId,
+        customerName: openClockRow.customer?.name ?? null,
+        startedAt: openClockRow.startedAt.toISOString(),
+      }
+    : null;
 
   return (
     <div className="flex animate-rise flex-col gap-8">
@@ -89,7 +104,11 @@ export default async function TimeSheetPage({
         </p>
       </div>
 
-      <TimeEntryForm defaultDate={todayKey} />
+      <TimeClockPanel mode="PAYROLL" openClock={openClock} />
+
+      <ManualEntryDisclosure>
+        <TimeEntryForm defaultDate={todayKey} />
+      </ManualEntryDisclosure>
 
       <section className="flex flex-col gap-4">
         <h2 className="text-heading">Registrert</h2>
