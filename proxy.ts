@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, decrypt } from "@/lib/session";
+import { SESSION_COOKIE, decryptSession } from "@/lib/session-token";
 
 // Rask forhåndssjekk som bare leser cookien. Den egentlige verifiseringen
 // skjer i requireUser() i lib/dal.ts, som slår opp mot databasen.
@@ -7,16 +7,17 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname === "/login";
 
-  const session = await decrypt(request.cookies.get(SESSION_COOKIE)?.value);
+  const session = await decryptSession(
+    request.cookies.get(SESSION_COOKIE)?.value,
+  );
 
   if (!session && !isLoginPage && pathname !== "/personvern") {
     return NextResponse.redirect(new URL("/login", request.nextUrl));
   }
 
-  // Destinasjon etter innlogging styres i login-action (ansatt → /, kunde → /portal)
-  if (session && isLoginPage) {
-    return NextResponse.redirect(new URL("/", request.nextUrl));
-  }
+  // Ikke redirect login → / her. Det skapte loop når cookien var gyldig JWT
+  // men brukeren manglet/var inaktiv i DB (requireUser → /login → proxy → / …).
+  // Innloggede brukere sendes videre fra selve login-siden i stedet.
 
   return NextResponse.next();
 }

@@ -24,20 +24,6 @@ function revalidateClock(customerId?: string | null) {
   }
 }
 
-export async function getOpenTimeClock() {
-  const user = await requireStaff();
-  return db.timeClock.findUnique({
-    where: { userId: user.id },
-    select: {
-      id: true,
-      kind: true,
-      customerId: true,
-      startedAt: true,
-      customer: { select: { id: true, name: true } },
-    },
-  });
-}
-
 export async function startPayrollClock(): Promise<FormState> {
   const user = await requireStaff();
   if (user.payType !== "HOURLY") {

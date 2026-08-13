@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getOpenTimeClock } from "@/app/actions/time-clock";
+import { getOpenTimeClock } from "@/lib/time-clock-query";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/dal";
 import { osloDateTimeLocalKey } from "@/lib/period";

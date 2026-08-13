@@ -4,7 +4,9 @@ import { logout } from "@/app/actions/auth";
 import { getCurrentUser } from "@/lib/dal";
 import { BrandIcon } from "@/components/brand";
 import { DesktopNav } from "@/components/desktop-nav";
-import { MobileNav, type AppNavGroup } from "@/components/mobile-nav";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { OneSignalInit } from "@/components/onesignal-init";
+import type { AppNavGroup } from "@/components/mobile-nav";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { outlineActionClass } from "@/lib/ui";
 
@@ -13,6 +15,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   if (user?.role === "CUSTOMER") redirect("/portal");
 
   const isAdmin = user?.role === "ADMIN";
+  const showTimelist = !isAdmin && user?.payType === "HOURLY";
 
   const groups: AppNavGroup[] = [
     {
@@ -20,9 +23,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         { href: "/", label: "Hjem" },
         { href: "/kalender", label: "Kalender" },
         ...(isAdmin ? [{ href: "/ukeplan", label: "Ukeplan" }] : []),
-        ...(!isAdmin && user?.payType === "HOURLY"
-          ? [{ href: "/timeliste", label: "Timeliste" }]
-          : []),
+        ...(showTimelist ? [{ href: "/timeliste", label: "Timeliste" }] : []),
       ],
     },
     ...(isAdmin
@@ -49,25 +50,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="sticky top-0 z-30 border-b border-line bg-white/85 backdrop-blur-xl">
+      {/* Logo-bar kun på desktop — mobil bruker sidetittel som i en app */}
+      <header className="sticky top-0 z-30 hidden border-b border-line bg-white/85 backdrop-blur-xl sm:block">
         <div className="relative mx-auto w-full max-w-5xl sm:max-w-6xl">
-          {/* Mobil — uendret */}
-          <div className="flex h-14 items-center justify-between gap-3 px-4 sm:hidden">
-            <Link
-              href="/"
-              className="flex min-w-0 items-center gap-2.5"
-              aria-label="Loggbok hjem"
-            >
-              <BrandIcon size={28} className="size-7" />
-              <span className="truncate text-[1.05rem] font-semibold tracking-tight text-navy-900">
-                Loggbok
-              </span>
-            </Link>
-            <MobileNav groups={groups} />
-          </div>
-
-          {/* Desktop kontor */}
-          <div className="hidden items-center justify-between gap-4 px-4 py-2.5 sm:flex">
+          <div className="flex items-center justify-between gap-4 px-4 py-2.5">
             <Link
               href="/"
               className="flex min-h-10 min-w-0 items-center gap-2.5"
@@ -98,11 +84,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:max-w-6xl sm:py-8">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-32 sm:max-w-6xl sm:px-4 sm:py-8 sm:pb-8">
         <PullToRefresh>{children}</PullToRefresh>
       </main>
 
-      <footer className="border-t border-line px-4 py-3 text-center">
+      <footer className="hidden border-t border-line px-4 py-3 text-center sm:block">
         <Link
           href="/personvern"
           className="text-meta font-medium text-navy-700 hover:text-navy-900"
@@ -110,6 +96,15 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           Personvern
         </Link>
       </footer>
+
+      <MobileBottomNav showTimelist={showTimelist} />
+      <OneSignalInit
+        externalUserId={
+          user && (user.role === "ADMIN" || user.role === "EMPLOYEE")
+            ? user.id
+            : null
+        }
+      />
     </div>
   );
 }

@@ -43,10 +43,7 @@ export function MonthFolderList({
                   : countLabel(folder.count)}
               </span>
             </span>
-            <span
-              aria-hidden
-              className="text-display leading-none text-navy-100"
-            >
+            <span aria-hidden className="text-heading text-brand">
               ›
             </span>
           </Link>

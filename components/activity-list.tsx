@@ -21,7 +21,7 @@ export function ActivityList({
 }) {
   if (items.length === 0) {
     return (
-      <p className="border-y border-line py-5 text-body text-navy-700">
+      <p className="rounded-md bg-white px-4 py-5 text-body text-navy-700 shadow-card">
         {emptyText}
       </p>
     );

@@ -1,13 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BrandLogo } from "@/components/brand";
+import { getCurrentUser } from "@/lib/dal";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
   title: "Logg inn – N&M",
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const user = await getCurrentUser();
+  if (user) {
+    redirect(user.role === "CUSTOMER" ? "/portal" : "/");
+  }
+
   return (
     <main className="flex min-h-full flex-1 flex-col bg-white">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 py-12 animate-rise">

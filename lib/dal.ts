@@ -41,7 +41,14 @@ export const getCurrentUser = cache(async () => {
 // server action — proxy.ts er bare en rask forhåndssjekk.
 export const requireUser = cache(async () => {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    const cookieStore = await cookies();
+    // Gyldig JWT uten bruker i DB → slett cookie (unngår login↔hjem-loop)
+    if (cookieStore.get(SESSION_COOKIE)) {
+      redirect("/api/session/clear");
+    }
+    redirect("/login");
+  }
   return user;
 });
 

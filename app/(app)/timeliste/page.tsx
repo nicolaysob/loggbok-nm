@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getOpenTimeClock } from "@/app/actions/time-clock";
+import { getOpenTimeClock } from "@/lib/time-clock-query";
 import { db } from "@/lib/db";
 import { requireHourlyUser } from "@/lib/dal";
 import { decimalToNumber, formatHours } from "@/lib/format";

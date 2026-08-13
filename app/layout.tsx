@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Source_Sans_3 } from "next/font/google";
 import { AddToHomeScreenPrompt } from "@/components/add-to-home-screen";
-import { OneSignalInit } from "@/components/onesignal-init";
-import { getCurrentUser } from "@/lib/dal";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -36,16 +34,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#15803d",
+  themeColor: "#16a34a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const user = await getCurrentUser();
-
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="no"
@@ -53,13 +49,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col">
         <AddToHomeScreenPrompt />
-        <OneSignalInit
-          externalUserId={
-            user && (user.role === "ADMIN" || user.role === "EMPLOYEE")
-              ? user.id
-              : null
-          }
-        />
         {children}
       </body>
     </html>
