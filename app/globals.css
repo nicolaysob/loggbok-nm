@@ -283,3 +283,78 @@ button {
 .nav-scroll::-webkit-scrollbar {
   display: none;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Utskrift — månedsrapporten i kundeportalen.
+
+   Må stå etter mørk modus-blokka: en kunde som skriver ut mens
+   telefonen står i mørk modus skal få svart tekst på hvitt papir,
+   ikke omvendt. Lik spesifisitet, så rekkefølgen avgjør.
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+  :root {
+    color-scheme: light;
+
+    --canvas: #ffffff;
+    --surface: #ffffff;
+    --sunken: #f2f0eb;
+    --raised: #ffffff;
+
+    --ink: #000000;
+    --ink-2: #33322e;
+    --ink-3: #57554f;
+
+    --hair: #c9c5bc;
+    --edge: #9c988f;
+
+    --hero: #000000;
+    --hero-2: #33322e;
+
+    --brand: #14612f;
+    --brand-strong: #14612f;
+    --brand-soft: #e8f2ea;
+    --on-brand: #ffffff;
+
+    --ok: #14612f;
+    --ok-soft: #e8f2ea;
+    --danger: #96150c;
+    --danger-soft: #fbeceb;
+    --warn: #7f3406;
+    --warn-soft: #fbf1e7;
+
+    --sh-1: none;
+    --sh-2: none;
+    --sh-brand: none;
+  }
+
+  @page {
+    margin: 16mm 14mm;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  /* Fargekodene på tidslinja bærer betydning — de må faktisk skrives ut */
+  .report {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Ikke del en registrering eller en seksjon over to sider */
+  .report section,
+  .report header,
+  .report footer,
+  .report li {
+    break-inside: avoid;
+  }
+
+  .report a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .animate-rise {
+    animation: none;
+  }
+}

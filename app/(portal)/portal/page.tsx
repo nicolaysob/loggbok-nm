@@ -8,7 +8,13 @@ import {
   RECENT_ACTIVITY_LIMIT,
 } from "@/lib/customer-activity";
 import { formatDate, formatLastVisit } from "@/lib/time";
-import { cardStaticClass, eyebrowClass, sectionHeadClass } from "@/lib/ui";
+import {
+  actionSize,
+  cardStaticClass,
+  eyebrowClass,
+  outlineActionClass,
+  sectionHeadClass,
+} from "@/lib/ui";
 import { ActivityList } from "@/components/activity-list";
 import { BrandIcon } from "@/components/brand";
 import { PortalIssueList } from "@/components/portal-issue-list";
@@ -229,6 +235,26 @@ export default async function CustomerPortalPage() {
           items={recentActivity}
           emptyText="Ingen registreringer ennå."
         />
+
+        <Link
+          href="/portal/rapport"
+          className={`mt-4 ${actionSize} ${outlineActionClass}`}
+        >
+          <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            className="size-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 3v5h5M9 13h6M9 17h4" />
+          </svg>
+          Månedsrapport
+        </Link>
       </section>
     </div>
   );

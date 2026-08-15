@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { requireCustomer } from "@/lib/dal";
 import {
   getCustomerActivity,
   listCustomerActivityMonths,
 } from "@/lib/customer-activity";
-import { calendarMonth, parseYearMonth } from "@/lib/period";
+import { calendarMonth, parseYearMonth, yearMonthParam } from "@/lib/period";
+import { actionSize, outlineActionClass } from "@/lib/ui";
 import { BackLink } from "@/components/back-link";
 import { ActivityList } from "@/components/activity-list";
 import { MonthFolderList } from "@/components/month-folder-list";
@@ -42,6 +44,13 @@ export default async function PortalActivityArchivePage({
           items={items}
           emptyText="Ingen registreringer denne måneden."
         />
+
+        <Link
+          href={`/portal/rapport?maaned=${yearMonthParam(parsed.year, parsed.month)}`}
+          className={`${actionSize} ${outlineActionClass}`}
+        >
+          Se som månedsrapport
+        </Link>
       </div>
     );
   }
