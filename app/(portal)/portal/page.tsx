@@ -7,14 +7,8 @@ import {
   recentActivitySince,
   RECENT_ACTIVITY_LIMIT,
 } from "@/lib/customer-activity";
-import { formatDate, formatLastVisit } from "@/lib/time";
-import {
-  actionSize,
-  cardStaticClass,
-  eyebrowClass,
-  outlineActionClass,
-  sectionHeadClass,
-} from "@/lib/ui";
+import { formatDate, formatLastVisit, formatMonthYear } from "@/lib/time";
+import { cardStaticClass, eyebrowClass, sectionHeadClass } from "@/lib/ui";
 import { ActivityList } from "@/components/activity-list";
 import { BrandIcon } from "@/components/brand";
 import { PortalIssueList } from "@/components/portal-issue-list";
@@ -87,6 +81,7 @@ export default async function CustomerPortalPage() {
   const lastVisit = lastVisitEntry?.occurredAt ?? null;
   const openIssueCount = openIssues.length;
   const initial = user.name.charAt(0).toUpperCase();
+  const thisMonth = formatMonthYear(new Date());
 
   return (
     <div className="flex animate-rise flex-col gap-7">
@@ -164,6 +159,47 @@ export default async function CustomerPortalPage() {
             </p>
           </div>
         </div>
+
+        {/* Rapporten er det styret faktisk skal bruke — den skal ikke ligge
+            gjemt nederst under hele tidslinja. */}
+        <Link
+          href="/portal/rapport"
+          className="mt-2.5 flex min-h-[4.5rem] items-center gap-3.5 rounded-2xl border border-hair bg-surface px-4 py-3.5 shadow-card transition-colors active:bg-sunken"
+        >
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
+            <svg
+              aria-hidden
+              viewBox="0 0 24 24"
+              className="size-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+              <path d="M14 3v5h5M9 13h6M9 17h4" />
+            </svg>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-heading text-ink">Månedsrapport</span>
+            <span className="mt-0.5 block truncate text-meta text-ink-2">
+              {thisMonth} · klar til utskrift
+            </span>
+          </span>
+          <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            className="size-5 shrink-0 text-ink-3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m9 5 7 7-7 7" />
+          </svg>
+        </Link>
       </header>
 
       {openIssueCount > 0 ? (
@@ -235,26 +271,6 @@ export default async function CustomerPortalPage() {
           items={recentActivity}
           emptyText="Ingen registreringer ennå."
         />
-
-        <Link
-          href="/portal/rapport"
-          className={`mt-4 ${actionSize} ${outlineActionClass}`}
-        >
-          <svg
-            aria-hidden
-            viewBox="0 0 24 24"
-            className="size-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.9"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
-            <path d="M14 3v5h5M9 13h6M9 17h4" />
-          </svg>
-          Månedsrapport
-        </Link>
       </section>
     </div>
   );

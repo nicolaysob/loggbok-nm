@@ -81,7 +81,9 @@ export function ActivityRow({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="min-w-0 flex-1 truncate text-micro text-ink-3">
+          {/* Ikke truncate: timeantallet står sist og er det kunden faktureres
+              for — det skal aldri kuttes bort av et langt navn. */}
+          <p className="min-w-0 flex-1 text-micro text-ink-3">
             <span className="font-bold text-ink">
               {activityKindLabels[item.kind]}
             </span>
