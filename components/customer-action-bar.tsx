@@ -2,8 +2,9 @@ import Link from "next/link";
 import type { StaffAccess } from "@/lib/access";
 import { actionSize, solidActionClass } from "@/lib/ui";
 
+// «Oppgaver» er ikke egen flis lenger — kundens oppgaveliste ligger
+// inne i Loggfør, så avkryssing og fritekst blir én registrering.
 const tiles = [
-  { href: "oppgaver", label: "Oppgaver", icon: "tasks", capability: "log" },
   { href: "timer", label: "Timer", icon: "clock", capability: "hours" },
   { href: "avvik", label: "Avvik", icon: "issue", capability: "issues" },
 ] as const;
@@ -20,13 +21,6 @@ function TileIcon({ name }: { name: (typeof tiles)[number]["icon"] }) {
     "aria-hidden": true,
   };
 
-  if (name === "tasks") {
-    return (
-      <svg {...common}>
-        <path d="M5 12.5 9.5 17 19 7" />
-      </svg>
-    );
-  }
   if (name === "clock") {
     return (
       <svg {...common}>

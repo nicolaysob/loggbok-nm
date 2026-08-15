@@ -8,6 +8,7 @@ import { occursOn } from "@/lib/calendar";
 import { osloMidnight, osloYmd, ymdKey } from "@/lib/period";
 import { roleLabels } from "@/lib/labels";
 import { actionSize, sectionHeadClass, solidActionClass } from "@/lib/ui";
+import { CompleteJobButton } from "@/components/complete-job-button";
 import { CustomerWorkList } from "@/components/customer-work-list";
 import { HomeClockBanner } from "@/components/home-clock-banner";
 import { ProfileMenu } from "@/components/profile-menu";
@@ -82,8 +83,14 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto flex w-full max-w-lg animate-rise flex-col gap-7">
-      <header className="-mx-5 -mt-[max(0.75rem,env(safe-area-inset-top))] rounded-b-3xl bg-hero px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-7 text-white sm:mx-0 sm:mt-0 sm:rounded-3xl sm:pt-7">
-        <div className="flex items-start justify-between gap-3">
+      <header className="hero-season relative -mx-5 -mt-[max(0.75rem,env(safe-area-inset-top))] overflow-hidden rounded-b-3xl bg-hero px-5 pt-[max(1.5rem,env(safe-area-inset-top))] pb-7 text-white sm:mx-0 sm:mt-0 sm:rounded-3xl sm:pt-7">
+        {/* Merket som nedtonet vannmerke — identitet uten å rope */}
+        <div
+          aria-hidden
+          className="brand-watermark pointer-events-none absolute -bottom-12 -right-9 size-52 opacity-[0.12]"
+        />
+
+        <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0">
             {/* first-letter, ikke capitalize — «15. august», ikke «15. August» */}
             <p className="text-meta font-medium text-white/55 first-letter:uppercase">
@@ -104,8 +111,39 @@ export default async function HomePage() {
           />
         </div>
 
+        {todayJobs.length > 0 ? (
+          <div className="relative mt-5">
+            <div className="flex items-end justify-between gap-3">
+              <p className="font-display text-[3.25rem] font-bold leading-none tracking-tight tabular-nums">
+                {doneJobs.length}
+                <span className="text-white/35">/{todayJobs.length}</span>
+              </p>
+              <p className="pb-1 text-right text-eyebrow uppercase leading-snug text-white/45">
+                oppdrag
+                <br />
+                ferdig i dag
+              </p>
+            </div>
+            <div
+              className="mt-3.5 h-2 overflow-hidden rounded-full bg-white/15"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={todayJobs.length}
+              aria-valuenow={doneJobs.length}
+              aria-label="Dagens fremdrift"
+            >
+              <div
+                className="bar-grow h-full rounded-full bg-season"
+                style={{
+                  width: `${Math.round((doneJobs.length / todayJobs.length) * 100)}%`,
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
+
         {openClockRow && clockHref ? (
-          <div className="mt-5">
+          <div className="relative mt-5">
             <HomeClockBanner
               href={clockHref}
               startedAt={openClockRow.startedAt.toISOString()}
@@ -148,26 +186,33 @@ export default async function HomePage() {
                       </span>
                     </span>
                   </Link>
-                  <form
-                    action={completeCalendarJob.bind(null, job.id, todayKey)}
-                    className="flex shrink-0 items-center px-2.5"
-                  >
-                    <button
-                      type="submit"
-                      aria-label={`Sett ferdig hos ${job.area.customer.name}`}
-                      className="flex min-h-12 items-center gap-2 rounded-xl bg-brand-soft px-3.5 text-meta font-bold text-brand transition-colors active:bg-brand active:text-on-brand"
-                    >
-                      <CheckIcon className="size-5" />
-                      Ferdig
-                    </button>
-                  </form>
+                  <span className="flex shrink-0 items-center px-2.5">
+                    <CompleteJobButton
+                      action={completeCalendarJob.bind(null, job.id, todayKey)}
+                      label={`Sett ferdig hos ${job.area.customer.name}`}
+                    />
+                  </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="rounded-2xl border border-hair bg-brand-soft px-4 py-4 text-body font-semibold text-brand">
-              Alt på planen er gjort i dag.
-            </p>
+            <div className="rounded-2xl border border-hair bg-surface px-5 py-7 text-center shadow-card">
+              <span
+                aria-hidden
+                className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-soft text-brand"
+              >
+                <CheckIcon className="size-6" />
+              </span>
+              <p className="mt-3 text-heading text-ink">
+                Alt på planen er gjort
+              </p>
+              <p className="mt-1 text-meta text-ink-2">
+                {todayJobs.length === 1
+                  ? "Dagens oppdrag er ferdig."
+                  : `Alle ${todayJobs.length} oppdragene er ferdige.`}{" "}
+                Godt jobbet.
+              </p>
+            </div>
           )}
 
           {doneJobs.length > 0 ? (

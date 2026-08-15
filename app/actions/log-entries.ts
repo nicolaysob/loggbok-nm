@@ -98,51 +98,10 @@ export async function updateLogEntryComment(
   return {};
 }
 
+// Én registrering for hele besøket: avkryssede oppgaver, fritekst,
+// eller begge. Med oppgaver blir typen TASK_COMPLETION (nå med valgfri
+// kommentar), uten blir den VISIT_NOTE — da må teksten bære registreringen.
 export async function createVisitNote(
-  customerId: string,
-  _prevState: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  const user = await requireStaffAccess("log");
-
-  const result = visitNoteSchema.safeParse({
-    comment: formData.get("comment"),
-    occurredAt: formData.get("occurredAt"),
-  });
-  if (!result.success) {
-    return { errors: z.flattenError(result.error).fieldErrors };
-  }
-
-  const when = occurredAtFromDateTimeLocal(result.data.occurredAt);
-  if ("error" in when) {
-    return { errors: { occurredAt: [when.error] } };
-  }
-
-  const photoResult = await photosFromFormData(formData);
-  if ("error" in photoResult) {
-    return { errors: { photos: [photoResult.error] } };
-  }
-
-  const areaId = await primaryAreaId(customerId);
-  if (!areaId) return { message: MISSING_AREA };
-
-  await db.logEntry.create({
-    data: {
-      areaId,
-      userId: user.id,
-      occurredAt: when.at,
-      type: "VISIT_NOTE",
-      comment: result.data.comment,
-      photos: {
-        create: photoResult.photos,
-      },
-    },
-  });
-
-  done(customerId);
-}
-
-export async function completeTasks(
   customerId: string,
   _prevState: FormState,
   formData: FormData,
@@ -154,20 +113,34 @@ export async function completeTasks(
 
   // Godta bare oppgaver som faktisk hører til denne kunden — id-ene kommer
   // fra skjemaet og kan ikke stoles på
-  const checkedIds = formData.getAll("tasks").map(String);
-  const ownTasks = await db.taskTemplate.findMany({
-    where: { id: { in: checkedIds }, areaId },
-    select: { id: true },
-  });
+  const checkedIds = formData.getAll("tasks").map(String).filter(Boolean);
+  const ownTasks =
+    checkedIds.length > 0
+      ? await db.taskTemplate.findMany({
+          where: { id: { in: checkedIds }, areaId },
+          select: { id: true },
+        })
+      : [];
 
-  if (ownTasks.length === 0) {
-    return { message: "Huk av minst én oppgave." };
+  const comment = String(formData.get("comment") ?? "").trim();
+  if (ownTasks.length === 0 && comment === "") {
+    return {
+      errors: {
+        comment: ["Huk av minst én oppgave, eller skriv hva som ble gjort."],
+      },
+    };
   }
 
-  const occurredAt = String(formData.get("occurredAt") ?? "").trim();
-  const when = occurredAtFromDateTimeLocal(occurredAt);
+  const when = occurredAtFromDateTimeLocal(
+    String(formData.get("occurredAt") ?? "").trim(),
+  );
   if ("error" in when) {
     return { errors: { occurredAt: [when.error] } };
+  }
+
+  const photoResult = await photosFromFormData(formData);
+  if ("error" in photoResult) {
+    return { errors: { photos: [photoResult.error] } };
   }
 
   await db.logEntry.create({
@@ -175,15 +148,21 @@ export async function completeTasks(
       areaId,
       userId: user.id,
       occurredAt: when.at,
-      type: "TASK_COMPLETION",
-      completedTasks: {
-        create: ownTasks.map((task) => ({ taskTemplateId: task.id })),
+      type: ownTasks.length > 0 ? "TASK_COMPLETION" : "VISIT_NOTE",
+      comment: comment === "" ? null : comment,
+      completedTasks:
+        ownTasks.length > 0
+          ? { create: ownTasks.map((task) => ({ taskTemplateId: task.id })) }
+          : undefined,
+      photos: {
+        create: photoResult.photos,
       },
     },
   });
 
   done(customerId);
 }
+
 
 export async function createExtraWork(
   customerId: string,

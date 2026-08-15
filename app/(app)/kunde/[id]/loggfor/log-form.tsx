@@ -11,7 +11,13 @@ import {
 import { PhotoPicker } from "@/components/photo-picker";
 import { CommentField } from "@/components/comment-field";
 import { FieldError, StickySubmit, labelClass } from "@/components/mobile-form";
-import { inputClass } from "@/lib/ui";
+import { inputClass, sectionHeadClass } from "@/lib/ui";
+
+export type LogTaskOption = {
+  id: string;
+  title: string;
+  lastDone: string | null;
+};
 
 const chipBase =
   "min-h-12 rounded-full px-4 text-meta font-bold transition-colors duration-150";
@@ -28,9 +34,12 @@ function commentLines(comment: string): string[] {
 export function LogForm({
   customerId,
   defaultDateTime,
+  tasks,
 }: {
   customerId: string;
   defaultDateTime: string;
+  /** Kundens faste oppgaver — tom liste skjuler seksjonen */
+  tasks: LogTaskOption[];
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     createVisitNote.bind(null, customerId),
@@ -39,6 +48,16 @@ export function LogForm({
   const [comment, setComment] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
+  const [checked, setChecked] = useState<Set<string>>(() => new Set());
+
+  function toggleTask(id: string) {
+    setChecked((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   function togglePreset(text: string) {
     setComment((current) => {
@@ -117,87 +136,140 @@ export function LogForm({
         <FieldError messages={state?.errors?.occurredAt} />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {visitPresets.map((preset) => {
-          if (preset.kind === "simple") {
-            const active = activePresets.has(preset.text);
-            return (
-              <button
-                key={preset.text}
-                type="button"
-                aria-pressed={active}
-                onClick={() => togglePreset(preset.text)}
-                className={active ? chipOn : chipOff}
-              >
-                {preset.text}
-              </button>
-            );
-          }
-
-          const open = openGroups.has(preset.label);
-          const selectedCount = preset.items.filter((item) =>
-            activePresets.has(groupItemLine(item)),
-          ).length;
-          const groupActive = selectedCount > 0;
-
-          return (
-            <div key={preset.label} className="flex w-full flex-col gap-2">
-              <button
-                type="button"
-                aria-expanded={open}
-                onClick={() => toggleGroupOpen(preset.label)}
-                className={`${groupActive ? chipOn : chipOff} flex w-full items-center justify-between text-left`}
-              >
-                <span>
-                  {preset.label}
-                  {groupActive ? ` · ${selectedCount}` : ""}
-                </span>
-                <svg
-                  viewBox="0 0 24 24"
-                  className={`size-4 transition-transform ${open ? "rotate-180" : ""}`}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
-
-              {open && (
-                <div className="flex flex-wrap gap-2 rounded-2xl border border-hair bg-surface p-3">
-                  {preset.items.map((item) => {
-                    const active = activePresets.has(groupItemLine(item));
-                    return (
-                      <button
-                        key={item}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => toggleGroupItem(preset, item)}
-                        className={active ? chipOn : chipOff}
+      {tasks.length > 0 ? (
+        <section>
+          <h2 className={sectionHeadClass}>
+            <span>Faste oppgaver</span>
+            {checked.size > 0 ? <span>{checked.size} valgt</span> : null}
+          </h2>
+          <ul className="overflow-hidden rounded-2xl border border-hair bg-surface shadow-card">
+            {tasks.map((task) => {
+              const active = checked.has(task.id);
+              return (
+                <li key={task.id} className="border-b border-hair last:border-b-0">
+                  {/* Hele raden er trykkbar — avkryssingsboksen ligger inni label */}
+                  <label
+                    className={`flex min-h-16 cursor-pointer items-center gap-3.5 px-4 py-3 transition-colors ${
+                      active ? "bg-brand text-on-brand" : "text-ink active:bg-sunken"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      name="tasks"
+                      value={task.id}
+                      checked={active}
+                      onChange={() => toggleTask(task.id)}
+                      className="size-7 shrink-0 accent-brand"
+                    />
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="text-heading">{task.title}</span>
+                      <span
+                        className={`text-micro tabular-nums ${
+                          active ? "text-on-brand/70" : "text-ink-3"
+                        }`}
                       >
-                        {item}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                        {task.lastDone ?? "Aldri utført"}
+                      </span>
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
+      <section>
+        <h2 className={sectionHeadClass}>
+          <span>Hurtigtekst</span>
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {visitPresets.map((preset) => {
+            if (preset.kind === "simple") {
+              const active = activePresets.has(preset.text);
+              return (
+                <button
+                  key={preset.text}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => togglePreset(preset.text)}
+                  className={active ? chipOn : chipOff}
+                >
+                  {preset.text}
+                </button>
+              );
+            }
+
+            const open = openGroups.has(preset.label);
+            const selectedCount = preset.items.filter((item) =>
+              activePresets.has(groupItemLine(item)),
+            ).length;
+            const groupActive = selectedCount > 0;
+
+            return (
+              <div key={preset.label} className="flex w-full flex-col gap-2">
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  onClick={() => toggleGroupOpen(preset.label)}
+                  className={`${groupActive ? chipOn : chipOff} flex w-full items-center justify-between text-left`}
+                >
+                  <span>
+                    {preset.label}
+                    {groupActive ? ` · ${selectedCount}` : ""}
+                  </span>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className={`size-4 transition-transform ${open ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+
+                {open && (
+                  <div className="flex flex-wrap gap-2 rounded-2xl border border-hair bg-surface p-3">
+                    {preset.items.map((item) => {
+                      const active = activePresets.has(groupItemLine(item));
+                      return (
+                        <button
+                          key={item}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => toggleGroupItem(preset, item)}
+                          className={active ? chipOn : chipOff}
+                        >
+                          {item}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="comment" className={labelClass}>
-          Hva ble gjort?
-        </label>
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor="comment" className={labelClass}>
+            Noe mer?
+          </label>
+          {checked.size > 0 ? (
+            <span className="text-micro text-ink-3">valgfritt</span>
+          ) : null}
+        </div>
         <CommentField
           id="comment"
           value={comment}
           onChange={setComment}
-          rows={6}
+          rows={5}
         />
         <FieldError messages={state?.errors?.comment} />
       </div>

@@ -89,7 +89,56 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Årstidsaksent — settes via data-season på <html> i layouten.
+
+   Vaktmesterarbeid følger sesongene, og appen gjør det samme:
+   kald blå om vinteren, frisk grønn om våren, dyp grønn om
+   sommeren, rust om høsten. Aksenten brukes kun i toppfeltets
+   glød og fremdriftsmåleren — ALLE knapper beholder merkegrønn,
+   ellers mister handlingsfargen betydningen sin.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --season: var(--brand);
+  --season-soft: var(--brand-soft);
+}
+
+html[data-season="vinter"] {
+  --season: #1272b0;
+  --season-soft: #e1eef7;
+}
+
+html[data-season="vaar"] {
+  --season: #57a33b;
+  --season-soft: #e8f3e2;
+}
+
+html[data-season="host"] {
+  --season: #b3591b;
+  --season-soft: #f9ecdf;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-season="vinter"] {
+    --season: #62b6e8;
+    --season-soft: #10293a;
+  }
+
+  html[data-season="vaar"] {
+    --season: #7cc75e;
+    --season-soft: #1a3010;
+  }
+
+  html[data-season="host"] {
+    --season: #e0913f;
+    --season-soft: #33220f;
+  }
+}
+
 @theme inline {
+  --color-season: var(--season);
+  --color-season-soft: var(--season-soft);
+
   --color-canvas: var(--canvas);
   --color-sunken: var(--sunken);
   --color-surface: var(--surface);
@@ -123,6 +172,7 @@
 
   --font-sans: var(--font-jakarta);
   --font-mono: var(--font-plex-mono);
+  --font-display: var(--font-bricolage);
 }
 
 @theme {
@@ -171,6 +221,33 @@ body {
   font-family: var(--font-jakarta), system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Overskriftene får eget snitt med mer karakter. Brødteksten
+   beholder Jakarta — den er tryggest å lese ute i felt. */
+.text-display,
+.text-title,
+.font-display {
+  font-family: var(--font-bricolage), var(--font-jakarta), system-ui, sans-serif;
+}
+
+/* ── Toppfeltet ─────────────────────────────────────────────── */
+
+/* Sesongglød oppe til høyre i det mørke toppfeltet */
+.hero-season {
+  background-image: radial-gradient(
+    120% 95% at 100% 0%,
+    color-mix(in oklab, var(--season) 26%, transparent),
+    transparent 62%
+  );
+}
+
+/* Logoen som nedtonet vannmerke. Maskes fra fila i stedet for å
+   legge 19 kB path-data inline i hver side. */
+.brand-watermark {
+  background-color: #fff;
+  -webkit-mask: url("/brand/ikon.svg") no-repeat center / contain;
+  mask: url("/brand/ikon.svg") no-repeat center / contain;
 }
 
 ::selection {
@@ -245,6 +322,42 @@ button {
   }
 }
 
+/* Haken tegnes når «Ferdig» trykkes */
+@keyframes check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes check-pop {
+  0% {
+    transform: scale(0.85);
+  }
+  55% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.check-anim {
+  animation: check-pop 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.check-anim path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: check-draw 0.28s ease-out 0.05s forwards;
+}
+
+/* Fremdriftslinja vokser inn når siden åpnes */
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
 .profile-drawer {
   animation: profile-drawer 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -265,13 +378,24 @@ button {
   .animate-toast {
     animation: toast-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
+
+  .bar-grow {
+    transform-origin: left;
+    animation: bar-grow 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .profile-drawer,
   .profile-drawer-dim,
-  .live-dot {
+  .live-dot,
+  .check-anim,
+  .check-anim path {
     animation: none;
+  }
+
+  .check-anim path {
+    stroke-dashoffset: 0;
   }
 }
 

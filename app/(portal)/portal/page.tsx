@@ -7,6 +7,8 @@ import {
   recentActivitySince,
   RECENT_ACTIVITY_LIMIT,
 } from "@/lib/customer-activity";
+import { decimalToNumber, formatHours } from "@/lib/format";
+import { osloYmd } from "@/lib/period";
 import { formatDate, formatLastVisit, formatMonthYear } from "@/lib/time";
 import { cardStaticClass, eyebrowClass, sectionHeadClass } from "@/lib/ui";
 import { ActivityList } from "@/components/activity-list";
@@ -14,6 +16,21 @@ import { BrandIcon } from "@/components/brand";
 import { PortalIssueList } from "@/components/portal-issue-list";
 import { ProfileMenu } from "@/components/profile-menu";
 import { PortalMessageForm } from "./message-form";
+
+const MONTH_SHORT = [
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "mai",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "okt",
+  "nov",
+  "des",
+] as const;
 
 export default async function CustomerPortalPage() {
   const user = await requireCustomer();
@@ -32,22 +49,54 @@ export default async function CustomerPortalPage() {
   }
 
   const areaId = await primaryAreaId(customer.id);
-  const yearStart = new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1));
+  const now = new Date();
+  const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+  // Samme periode i fjor — hele fjoråret fram til dagens dato minus ett år,
+  // så «mot i fjor» sammenlikner likt med likt
+  const lastYearStart = new Date(Date.UTC(now.getUTCFullYear() - 1, 0, 1));
+  const lastYearSameDay = new Date(now);
+  lastYearSameDay.setUTCFullYear(now.getUTCFullYear() - 1);
 
-  const [lastVisitEntry, visitsThisYear, openIssues, openMessages, recentActivity] =
-    await Promise.all([
-      areaId
-        ? db.logEntry.findFirst({
-            where: { areaId },
-            orderBy: { occurredAt: "desc" },
-            select: { occurredAt: true, user: { select: { name: true } } },
-          })
-        : Promise.resolve(null),
-      areaId
-        ? db.logEntry.count({
-            where: { areaId, occurredAt: { gte: yearStart } },
-          })
-        : Promise.resolve(0),
+  const [
+    lastVisitEntry,
+    visitDates,
+    visitsLastYearSamePeriod,
+    extraHoursSum,
+    openIssues,
+    openMessages,
+    recentActivity,
+  ] = await Promise.all([
+    areaId
+      ? db.logEntry.findFirst({
+          where: { areaId },
+          orderBy: { occurredAt: "desc" },
+          select: { occurredAt: true, user: { select: { name: true } } },
+        })
+      : Promise.resolve(null),
+    areaId
+      ? db.logEntry.findMany({
+          where: { areaId, occurredAt: { gte: yearStart } },
+          select: { occurredAt: true },
+        })
+      : Promise.resolve([]),
+    areaId
+      ? db.logEntry.count({
+          where: {
+            areaId,
+            occurredAt: { gte: lastYearStart, lt: lastYearSameDay },
+          },
+        })
+      : Promise.resolve(0),
+    areaId
+      ? db.logEntry.aggregate({
+          _sum: { hours: true },
+          where: {
+            areaId,
+            type: "EXTRA_WORK",
+            occurredAt: { gte: yearStart },
+          },
+        })
+      : Promise.resolve(null),
       db.issue.findMany({
         where: {
           area: { customerId: customer.id },
@@ -72,16 +121,34 @@ export default async function CustomerPortalPage() {
           createdAt: true,
         },
       }),
-      getCustomerActivity(customer.id, {
-        since: recentActivitySince(),
-        take: RECENT_ACTIVITY_LIMIT,
-      }),
-    ]);
+    getCustomerActivity(customer.id, {
+      since: recentActivitySince(),
+      take: RECENT_ACTIVITY_LIMIT,
+    }),
+  ]);
 
   const lastVisit = lastVisitEntry?.occurredAt ?? null;
   const openIssueCount = openIssues.length;
   const initial = user.name.charAt(0).toUpperCase();
-  const thisMonth = formatMonthYear(new Date());
+  const thisMonth = formatMonthYear(now);
+
+  // Besøk per måned i år, i norsk tid
+  const currentMonth = osloYmd(now).month;
+  const monthCounts = Array.from({ length: currentMonth }, () => 0);
+  for (const row of visitDates) {
+    const { month } = osloYmd(row.occurredAt);
+    if (month >= 1 && month <= currentMonth) monthCounts[month - 1] += 1;
+  }
+  const maxMonthCount = Math.max(...monthCounts, 1);
+  const visitsThisYear = visitDates.length;
+  // Vises bare når det er fremgang å vise — dette er utstillingsvinduet
+  const visitDiff =
+    visitsLastYearSamePeriod > 0
+      ? visitsThisYear - visitsLastYearSamePeriod
+      : 0;
+  const extraHoursThisYear = extraHoursSum?._sum.hours
+    ? decimalToNumber(extraHoursSum._sum.hours)
+    : 0;
 
   return (
     <div className="flex animate-rise flex-col gap-7">
@@ -112,7 +179,7 @@ export default async function CustomerPortalPage() {
 
         <h1 className="mt-6 text-display text-ink">{customer.name}</h1>
 
-        <div className="mt-4 rounded-3xl bg-hero px-5 py-5 text-white">
+        <div className="hero-season mt-4 rounded-3xl bg-hero px-5 py-5 text-white">
           <p className="text-eyebrow uppercase text-white/50">Sist utført</p>
           <p className="mt-2.5 text-title">
             {lastVisit ? formatLastVisit(lastVisit) : "Ingen besøk ennå"}
@@ -125,6 +192,46 @@ export default async function CustomerPortalPage() {
                 : null}
             </p>
           ) : null}
+        </div>
+
+        {/* Året så langt — store tall og utvikling. Dette er siden et styre
+            bedømmer oss etter, så tallene skal bære seg selv. */}
+        <div className="mt-2.5 rounded-2xl border border-hair bg-surface px-4 py-4 shadow-card">
+          <p className={eyebrowClass}>Besøk i år</p>
+          <div className="mt-1 flex items-baseline gap-2.5">
+            <p className="font-display text-[2.75rem] font-bold leading-none tracking-tight tabular-nums text-ink">
+              {visitsThisYear}
+            </p>
+            {visitDiff > 0 ? (
+              <p className="text-meta font-bold text-brand">
+                +{visitDiff} mot i fjor
+              </p>
+            ) : null}
+          </div>
+
+          <div className="mt-4 flex h-20 items-end gap-1.5" aria-hidden>
+            {monthCounts.map((count, index) => (
+              <div
+                key={index}
+                className={`flex-1 rounded-t-md rounded-b-sm ${
+                  index === currentMonth - 1 ? "bg-brand" : "bg-brand-soft"
+                }`}
+                style={{
+                  height: `${Math.max(6, Math.round((count / maxMonthCount) * 100))}%`,
+                }}
+              />
+            ))}
+          </div>
+          <div className="mt-1.5 flex gap-1.5" aria-hidden>
+            {MONTH_SHORT.slice(0, currentMonth).map((label) => (
+              <span
+                key={label}
+                className="flex-1 text-center text-[0.5625rem] font-bold uppercase tracking-wide text-ink-3"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
 
         <div className="mt-2.5 grid grid-cols-2 gap-2.5">
@@ -153,9 +260,9 @@ export default async function CustomerPortalPage() {
             </p>
           </div>
           <div className="rounded-2xl border border-hair bg-surface px-4 py-3.5 shadow-card">
-            <p className={eyebrowClass}>Besøk i år</p>
+            <p className={eyebrowClass}>Timer ekstraarbeid i år</p>
             <p className="mt-2 text-title tabular-nums text-ink">
-              {visitsThisYear}
+              {formatHours(extraHoursThisYear)} t
             </p>
           </div>
         </div>

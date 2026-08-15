@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import {
+  Bricolage_Grotesque,
+  IBM_Plex_Mono,
+  Plus_Jakarta_Sans,
+} from "next/font/google";
 import { AddToHomeScreenPrompt } from "@/components/add-to-home-screen";
 import { CapacitorShell } from "@/components/capacitor-shell";
 import "./globals.css";
@@ -15,6 +19,27 @@ const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["500", "600"],
 });
+
+// Kun til overskrifter — brødteksten beholder Jakarta
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+});
+
+/** Aksentfargen følger arbeidsåret — se årstidsblokka i globals.css. */
+function osloSeason(): "vinter" | "vaar" | "sommer" | "host" {
+  const month = Number(
+    new Intl.DateTimeFormat("en-US", {
+      month: "numeric",
+      timeZone: "Europe/Oslo",
+    }).format(new Date()),
+  );
+  if (month === 12 || month <= 2) return "vinter";
+  if (month <= 5) return "vaar";
+  if (month <= 8) return "sommer";
+  return "host";
+}
 
 export const metadata: Metadata = {
   title: "Loggbok – N&M",
@@ -54,7 +79,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="no"
-      className={`${jakarta.variable} ${plexMono.variable} h-full antialiased`}
+      data-season={osloSeason()}
+      className={`${jakarta.variable} ${plexMono.variable} ${bricolage.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <CapacitorShell />

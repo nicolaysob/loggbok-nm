@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/dal";
-import { formatLastVisit } from "@/lib/time";
+import { formatLastVisit, formatTime } from "@/lib/time";
 import { BackLink } from "@/components/back-link";
 import { CustomerActionBar } from "@/components/customer-action-bar";
 import { PageLoading } from "@/components/page-loading";
@@ -45,21 +45,30 @@ export default async function CustomerPage({
       {lagret ? (
         <p
           role="status"
-          className="flex animate-toast items-center gap-2.5 rounded-2xl bg-brand px-4 py-3.5 text-body font-bold text-on-brand shadow-brand"
+          className="flex animate-toast items-center gap-3 rounded-2xl bg-brand px-4 py-3.5 text-on-brand shadow-brand"
         >
-          <svg
+          <span
             aria-hidden
-            viewBox="0 0 24 24"
-            className="size-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/20"
           >
-            <path d="M5 12.5 9.5 17 19 7" />
-          </svg>
-          Lagret
+            <svg
+              viewBox="0 0 24 24"
+              className="check-anim size-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 12.5 9.5 17 19 7" />
+            </svg>
+          </span>
+          <span className="min-w-0">
+            <span className="block text-body font-bold">Lagret i loggen</span>
+            <span className="block truncate text-meta text-on-brand/75">
+              {customer.name} · {formatTime(new Date())}
+            </span>
+          </span>
         </p>
       ) : null}
 
