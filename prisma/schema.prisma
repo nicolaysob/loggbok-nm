@@ -254,6 +254,12 @@ model User {
   role         Role    @default(EMPLOYEE)
   active       Boolean @default(true)
   payType      PayType @default(FIXED)
+  // Ansatt-tilganger. Admin har alltid alt. Ignoreres for CUSTOMER.
+  canLog       Boolean @default(true)
+  canIssues    Boolean @default(true)
+  canHours     Boolean @default(true)
+  canTodos     Boolean @default(true)
+  canCalendar  Boolean @default(true)
   // Kun for CUSTOMER — hvilken kundeportalen viser
   customerId   String?
 

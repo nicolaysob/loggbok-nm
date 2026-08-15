@@ -8,9 +8,11 @@ import {
   RECENT_ACTIVITY_LIMIT,
 } from "@/lib/customer-activity";
 import { formatDate, formatLastVisit } from "@/lib/time";
-import { cardStaticClass, outlineActionClass } from "@/lib/ui";
+import { cardStaticClass, eyebrowClass, sectionHeadClass } from "@/lib/ui";
 import { ActivityList } from "@/components/activity-list";
+import { BrandIcon } from "@/components/brand";
 import { PortalIssueList } from "@/components/portal-issue-list";
+import { ProfileMenu } from "@/components/profile-menu";
 import { PortalMessageForm } from "./message-form";
 
 export default async function CustomerPortalPage() {
@@ -23,23 +25,29 @@ export default async function CustomerPortalPage() {
 
   if (!customer) {
     return (
-      <p className="text-body text-navy-700">
-        Kundekontoen er ikke koblet til en kunde. Kontakt N&amp;M.
+      <p className="text-body text-ink-2">
+        Kundekontoen er ikke koblet til en kunde.
       </p>
     );
   }
 
   const areaId = await primaryAreaId(customer.id);
+  const yearStart = new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1));
 
-  const [lastVisitEntry, openIssues, openMessages, recentActivity] =
+  const [lastVisitEntry, visitsThisYear, openIssues, openMessages, recentActivity] =
     await Promise.all([
       areaId
         ? db.logEntry.findFirst({
             where: { areaId },
             orderBy: { occurredAt: "desc" },
-            select: { occurredAt: true },
+            select: { occurredAt: true, user: { select: { name: true } } },
           })
         : Promise.resolve(null),
+      areaId
+        ? db.logEntry.count({
+            where: { areaId, occurredAt: { gte: yearStart } },
+          })
+        : Promise.resolve(0),
       db.issue.findMany({
         where: {
           area: { customerId: customer.id },
@@ -71,78 +79,98 @@ export default async function CustomerPortalPage() {
     ]);
 
   const lastVisit = lastVisitEntry?.occurredAt ?? null;
-  const lastVisitLabel = formatLastVisit(lastVisit);
   const openIssueCount = openIssues.length;
-  const issuesOk = openIssueCount === 0;
   const initial = user.name.charAt(0).toUpperCase();
-  const todayLabel = new Intl.DateTimeFormat("nb-NO", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    timeZone: "Europe/Oslo",
-  }).format(new Date());
-  const today = todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
 
   return (
-    <div className="flex animate-rise flex-col gap-6">
-      <div className="flex items-end justify-between gap-3 px-0.5">
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-meta font-medium text-navy-700">{today}</p>
-          <h1 className="text-display tracking-tight text-navy-900">
-            {customer.name}
-          </h1>
+    <div className="flex animate-rise flex-col gap-7">
+      <header>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            {/* Logoen er svart — den trenger hvit bakgrunn også i mørk modus */}
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white">
+              <BrandIcon size={26} className="size-6.5" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-meta font-bold text-ink">Loggbok</p>
+              <p className="truncate text-micro text-ink-3">
+                N&amp;M Vaktmesterservice
+              </p>
+            </div>
+          </div>
+          <ProfileMenu
+            initial={initial}
+            name={user.name}
+            subtitle="Kundeportal"
+            links={[
+              { href: "/personvern", label: "Personvern" },
+              { href: "/support", label: "Support" },
+            ]}
+          />
         </div>
-        <span
-          aria-hidden
-          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand text-heading font-bold text-white shadow-brand"
-        >
-          {initial}
-        </span>
-      </div>
 
-      <section aria-label="Status" className="grid grid-cols-2 gap-2.5">
-        <div className="rounded-md bg-white px-3.5 py-4 shadow-card">
-          <p className="text-meta text-navy-700">Siste besøk</p>
-          <p
-            className={`mt-1.5 font-mono text-[1.35rem] font-bold leading-tight ${
-              !lastVisit ? "text-amber-700" : "text-navy-900"
+        <h1 className="mt-6 text-display text-ink">{customer.name}</h1>
+
+        <div className="mt-4 rounded-3xl bg-hero px-5 py-5 text-white">
+          <p className="text-eyebrow uppercase text-white/50">Sist utført</p>
+          <p className="mt-2.5 text-title">
+            {lastVisit ? formatLastVisit(lastVisit) : "Ingen besøk ennå"}
+          </p>
+          {lastVisit ? (
+            <p className="mt-1.5 text-meta text-white/65">
+              {formatDate(lastVisit)}
+              {lastVisitEntry?.user?.name
+                ? ` · ${lastVisitEntry.user.name}`
+                : null}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+          <div
+            className={`rounded-2xl px-4 py-3.5 ${
+              openIssueCount === 0
+                ? "bg-brand-soft"
+                : "border border-hair bg-surface shadow-card"
             }`}
           >
-            {lastVisitLabel}
-          </p>
-          {lastVisit && (
-            <p className="mt-1 font-mono text-meta text-navy-700">
-              {formatDate(lastVisit)}
+            <p
+              className={
+                openIssueCount === 0
+                  ? "text-eyebrow uppercase text-brand"
+                  : eyebrowClass
+              }
+            >
+              Åpne avvik
             </p>
-          )}
-        </div>
-        {issuesOk ? (
-          <div className="rounded-md bg-brand px-3.5 py-4 shadow-brand">
-            <p className="text-meta text-white/85">Avvik</p>
-            <p className="mt-1.5 font-mono text-[1.35rem] font-bold leading-tight text-white">
-              0
-            </p>
-            <p className="mt-1 text-meta text-white/85">Alt i orden</p>
-          </div>
-        ) : (
-          <div className="rounded-md bg-white px-3.5 py-4 shadow-card">
-            <p className="text-meta text-navy-700">Avvik</p>
-            <p className="mt-1.5 font-mono text-[1.35rem] font-bold leading-tight text-red-700">
+            <p
+              className={`mt-2 text-title tabular-nums ${
+                openIssueCount === 0 ? "text-brand" : "text-ink"
+              }`}
+            >
               {openIssueCount}
             </p>
-            <p className="mt-1 text-meta text-navy-700">Åpne</p>
           </div>
-        )}
-      </section>
-      {!issuesOk && (
-        <section id="aapne-avvik" className="flex flex-col gap-3">
-          <div className="flex flex-col gap-0.5">
-            <h2 className="text-heading text-red-700">Åpne avvik</h2>
-            <p className="text-meta text-navy-700">
-              Disse følges opp av N&amp;M. Når de er utbedret, flyttes de til
-              arkivet.
+          <div className="rounded-2xl border border-hair bg-surface px-4 py-3.5 shadow-card">
+            <p className={eyebrowClass}>Besøk i år</p>
+            <p className="mt-2 text-title tabular-nums text-ink">
+              {visitsThisYear}
             </p>
           </div>
+        </div>
+      </header>
+
+      {openIssueCount > 0 ? (
+        <section>
+          <h2 className={sectionHeadClass}>
+            <span>Åpne avvik</span>
+            <Link
+              href="/portal/avvik"
+              className="text-eyebrow uppercase text-ink-2"
+            >
+              Alle ›
+            </Link>
+          </h2>
           <PortalIssueList
             issues={openIssues.map((issue) => ({
               id: issue.id,
@@ -154,76 +182,53 @@ export default async function CustomerPortalPage() {
             }))}
           />
         </section>
-      )}
+      ) : null}
 
-      <section className="flex flex-col gap-4">
-        <PortalMessageForm />
-        {openMessages.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <h2 className="text-meta font-semibold text-navy-900">
-              Venter på oppfølging
-            </h2>
-            <ul
-              className={`divide-y divide-line overflow-hidden ${cardStaticClass}`}
-            >
-              {openMessages.map((message) => (
-                <li key={message.id} className="flex flex-col gap-1 px-4 py-3.5">
-                  <span className="font-mono text-meta font-medium text-navy-700">
-                    {formatDate(message.createdAt)}
-                  </span>
-                  <p className="text-body whitespace-pre-wrap text-navy-900">
-                    {message.body}
-                  </p>
-                  <p className="text-meta font-semibold text-green-700">
-                    Mottatt — venter på oppfølging
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-heading text-navy-900">Siste aktivitet</h2>
-          <p className="text-meta text-navy-700">
-            Besøk, oppgaver og avvik de siste 14 dagene
-          </p>
-        </div>
-        <ActivityList
-          items={recentActivity}
-          emptyText="Ingen registreringer de siste 14 dagene."
-        />
-        <div className="flex flex-col gap-3 pt-1">
-          <Link
-            href="/portal/avvik"
-            className={`flex min-h-14 items-center justify-between rounded-md px-4 text-body font-semibold ${outlineActionClass}`}
-          >
-            Avvikarkiv
-            <span aria-hidden className="text-heading text-brand">
-              ›
-            </span>
-          </Link>
-          <Link
-            href="/portal/aktivitet"
-            className={`flex min-h-14 items-center justify-between rounded-md px-4 text-body font-semibold ${outlineActionClass}`}
-          >
-            Se all aktivitet
-            <span aria-hidden className="text-heading text-brand">
-              ›
-            </span>
-          </Link>
+      <section>
+        <h2 className={sectionHeadClass}>
+          <span>Meld fra til oss</span>
           <Link
             href="/portal/meldinger"
-            className={`flex min-h-14 items-center justify-between rounded-md px-4 text-body font-semibold ${outlineActionClass}`}
+            className="text-eyebrow uppercase text-ink-2"
           >
-            Se meldinger
-            <span aria-hidden className="text-heading text-brand">
-              ›
-            </span>
+            Tidligere ›
           </Link>
-        </div>
+        </h2>
+        <PortalMessageForm />
+
+        {openMessages.length > 0 ? (
+          <ul className="mt-2.5 flex flex-col gap-2.5">
+            {openMessages.map((message) => (
+              <li
+                key={message.id}
+                className={`flex flex-col gap-1.5 px-4 py-3.5 ${cardStaticClass}`}
+              >
+                <span className="text-micro text-ink-3">
+                  Sendt {formatDate(message.createdAt)} · ikke lest ennå
+                </span>
+                <p className="text-body whitespace-pre-wrap text-ink">
+                  {message.body}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
+      <section>
+        <h2 className={sectionHeadClass}>
+          <span>Utført arbeid</span>
+          <Link
+            href="/portal/aktivitet"
+            className="text-eyebrow uppercase text-ink-2"
+          >
+            Arkiv ›
+          </Link>
+        </h2>
+        <ActivityList
+          items={recentActivity}
+          emptyText="Ingen registreringer ennå."
+        />
       </section>
     </div>
   );

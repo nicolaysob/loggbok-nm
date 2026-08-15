@@ -9,14 +9,14 @@ import {
   type VisitPresetGroup,
 } from "@/lib/visit-presets";
 import { PhotoPicker } from "@/components/photo-picker";
-import { ImproveTextButton } from "@/components/improve-text-button";
-import {
-  FieldError,
-  StickySubmit,
-  labelClass,
-  textareaClass,
-} from "@/components/mobile-form";
-import { outlineActionClass, inputClass } from "@/lib/ui";
+import { CommentField } from "@/components/comment-field";
+import { FieldError, StickySubmit, labelClass } from "@/components/mobile-form";
+import { inputClass } from "@/lib/ui";
+
+const chipBase =
+  "min-h-12 rounded-full px-4 text-meta font-bold transition-colors duration-150";
+const chipOff = `${chipBase} border-[1.5px] border-edge bg-surface text-ink active:bg-sunken`;
+const chipOn = `${chipBase} bg-brand text-on-brand shadow-brand active:bg-brand-strong`;
 
 function commentLines(comment: string): string[] {
   return comment
@@ -100,8 +100,8 @@ export function LogForm({
   }
 
   return (
-    <form action={submit} className="flex flex-col gap-4 pb-4">
-      <div className="flex flex-col gap-1.5">
+    <form action={submit} className="flex flex-col gap-7 pb-4">
+      <div className="flex flex-col gap-2">
         <label htmlFor="occurredAt" className={labelClass}>
           Tidspunkt
         </label>
@@ -114,113 +114,95 @@ export function LogForm({
           max={defaultDateTime}
           className={`${inputClass} min-h-14`}
         />
-        <p className="text-meta text-navy-700">
-          Nå som standard — endre hvis besøket var et annet tidspunkt.
-        </p>
         <FieldError messages={state?.errors?.occurredAt} />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <p className={labelClass}>Hurtigvalg</p>
-        <div className="flex flex-wrap gap-2">
-          {visitPresets.map((preset) => {
-            if (preset.kind === "simple") {
-              const active = activePresets.has(preset.text);
-              return (
-                <button
-                  key={preset.text}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => togglePreset(preset.text)}
-                  className={`min-h-12 rounded-md px-4 text-meta font-semibold transition-all duration-150 ${
-                    active
-                      ? "border border-brand bg-brand-50 text-green-700"
-                      : outlineActionClass
-                  }`}
-                >
-                  {active ? "✓ " : ""}
-                  {preset.text}
-                </button>
-              );
-            }
-
-            const open = openGroups.has(preset.label);
-            const selectedCount = preset.items.filter((item) =>
-              activePresets.has(groupItemLine(item)),
-            ).length;
-            const groupActive = selectedCount > 0;
-
+      <div className="flex flex-wrap gap-2">
+        {visitPresets.map((preset) => {
+          if (preset.kind === "simple") {
+            const active = activePresets.has(preset.text);
             return (
-              <div key={preset.label} className="flex w-full flex-col gap-2">
-                <button
-                  type="button"
-                  aria-expanded={open}
-                  onClick={() => toggleGroupOpen(preset.label)}
-                  className={`flex min-h-12 w-full items-center justify-between rounded-md px-4 text-left text-meta font-semibold transition-all duration-150 ${
-                    groupActive
-                      ? "border border-brand bg-brand-50 text-green-700"
-                      : outlineActionClass
-                  }`}
-                >
-                  <span>
-                    {groupActive ? "✓ " : ""}
-                    {preset.label}
-                    {groupActive ? ` (${selectedCount})` : ""}
-                  </span>
-                  <span aria-hidden className="text-heading text-navy-100">
-                    {open ? "▾" : "›"}
-                  </span>
-                </button>
-
-                {open && (
-                  <div className="flex flex-wrap gap-2 rounded-md border border-line bg-navy-50/60 p-3">
-                    {preset.items.map((item) => {
-                      const active = activePresets.has(groupItemLine(item));
-                      return (
-                        <button
-                          key={item}
-                          type="button"
-                          aria-pressed={active}
-                          onClick={() => toggleGroupItem(preset, item)}
-                          className={`min-h-12 rounded-md px-4 text-meta font-semibold transition-all duration-150 ${
-                            active
-                              ? "border border-brand bg-brand-50 text-green-700"
-                              : outlineActionClass
-                          }`}
-                        >
-                          {active ? "✓ " : ""}
-                          {item}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+              <button
+                key={preset.text}
+                type="button"
+                aria-pressed={active}
+                onClick={() => togglePreset(preset.text)}
+                className={active ? chipOn : chipOff}
+              >
+                {preset.text}
+              </button>
             );
-          })}
-        </div>
+          }
+
+          const open = openGroups.has(preset.label);
+          const selectedCount = preset.items.filter((item) =>
+            activePresets.has(groupItemLine(item)),
+          ).length;
+          const groupActive = selectedCount > 0;
+
+          return (
+            <div key={preset.label} className="flex w-full flex-col gap-2">
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => toggleGroupOpen(preset.label)}
+                className={`${groupActive ? chipOn : chipOff} flex w-full items-center justify-between text-left`}
+              >
+                <span>
+                  {preset.label}
+                  {groupActive ? ` · ${selectedCount}` : ""}
+                </span>
+                <svg
+                  viewBox="0 0 24 24"
+                  className={`size-4 transition-transform ${open ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+
+              {open && (
+                <div className="flex flex-wrap gap-2 rounded-2xl border border-hair bg-surface p-3">
+                  {preset.items.map((item) => {
+                    const active = activePresets.has(groupItemLine(item));
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => toggleGroupItem(preset, item)}
+                        className={active ? chipOn : chipOff}
+                      >
+                        {item}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
-
-      <label htmlFor="comment" className={labelClass}>
-        Hva ble gjort?
-      </label>
-      <textarea
-        id="comment"
-        name="comment"
-        rows={6}
-        value={comment}
-        onChange={(event) => setComment(event.target.value)}
-        className={textareaClass}
-      />
-
-      <ImproveTextButton text={comment} onImproved={setComment} />
-
-      <FieldError messages={state?.errors?.comment} />
 
       <div className="flex flex-col gap-2">
-        <p className={labelClass}>Bilder</p>
-        <PhotoPicker files={photos} onChange={setPhotos} />
+        <label htmlFor="comment" className={labelClass}>
+          Hva ble gjort?
+        </label>
+        <CommentField
+          id="comment"
+          value={comment}
+          onChange={setComment}
+          rows={6}
+        />
+        <FieldError messages={state?.errors?.comment} />
       </div>
+
+      <PhotoPicker files={photos} onChange={setPhotos} />
 
       <FieldError messages={state?.errors?.photos} />
       <FieldError messages={state?.message ? [state.message] : undefined} />

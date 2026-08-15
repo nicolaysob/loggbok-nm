@@ -1,19 +1,18 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Frequency } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/dal";
+import { requireStaffAccess } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
 import { frequencyOrder } from "@/lib/labels";
 import { osloDateTimeLocalKey } from "@/lib/period";
 import { formatDate } from "@/lib/time";
-import { backLinkClass } from "@/lib/ui";
+import { BackLink } from "@/components/back-link";
 import { TasksForm, type TaskGroup } from "./tasks-form";
 
 export default async function TasksPage({
   params,
 }: PageProps<"/kunde/[id]/oppgaver">) {
-  await requireUser();
+  await requireStaffAccess("log");
   const { id } = await params;
 
   const customer = await db.customer.findUnique({
@@ -72,16 +71,14 @@ export default async function TasksPage({
     .filter((group) => group.tasks.length > 0);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <Link href={`/kunde/${customer.id}`} className={backLinkClass}>
-          ← {customer.name}
-        </Link>
-        <h1 className="text-display tracking-tight">Oppgaver</h1>
+    <div className="mx-auto flex w-full max-w-lg animate-rise flex-col gap-6">
+      <div className="-mx-2 flex items-center gap-1">
+        <BackLink fallback={`/kunde/${customer.id}`} />
+        <h1 className="min-w-0 truncate text-heading">{customer.name}</h1>
       </div>
 
       {groups.length === 0 ? (
-        <p className="text-body">
+        <p className="border border-hair bg-surface px-5 py-5 text-body text-ink-2">
           Ingen oppgaver er satt opp for denne kunden ennå.
         </p>
       ) : (

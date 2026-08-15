@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOpenTimeClock } from "@/lib/time-clock-query";
 import { db } from "@/lib/db";
-import { requireStaff } from "@/lib/dal";
+import { requireStaffAccess } from "@/lib/dal";
 import { osloDateTimeLocalKey } from "@/lib/period";
-import { backLinkClass } from "@/lib/ui";
+import { BackLink } from "@/components/back-link";
 import { ManualEntryDisclosure } from "@/components/manual-entry-disclosure";
 import { TimeClockPanel } from "@/components/time-clock-panel";
 import { HoursForm } from "./hours-form";
@@ -12,7 +11,7 @@ import { HoursForm } from "./hours-form";
 export default async function ExtraWorkPage({
   params,
 }: PageProps<"/kunde/[id]/timer">) {
-  await requireStaff();
+  await requireStaffAccess("hours");
   const { id } = await params;
 
   const [customer, openClockRow] = await Promise.all([
@@ -35,12 +34,10 @@ export default async function ExtraWorkPage({
     : null;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-2">
-        <Link href={`/kunde/${customer.id}`} className={backLinkClass}>
-          ← {customer.name}
-        </Link>
-        <h1 className="text-display tracking-tight">Timeregistrering</h1>
+    <div className="flex animate-rise flex-col gap-8">
+      <div className="-mx-2 flex items-center gap-1">
+        <BackLink fallback={`/kunde/${customer.id}`} />
+        <h1 className="min-w-0 truncate text-heading">{customer.name}</h1>
       </div>
 
       <TimeClockPanel

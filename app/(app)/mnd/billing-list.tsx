@@ -35,7 +35,9 @@ export function BillingList({
       <h2 className="text-heading">{title}</h2>
 
       {groups.length === 0 ? (
-        <p className="text-body text-navy-700">{emptyText}</p>
+        <p className="rounded-2xl bg-surface px-5 py-5 text-body text-ink-2 shadow-card">
+          {emptyText}
+        </p>
       ) : (
         <ul className="flex flex-col gap-4">
           {groups.map((group) => (
@@ -43,16 +45,16 @@ export function BillingList({
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <Link
                   href={`/kunde/${group.customerId}`}
-                  className="text-heading text-navy-900 hover:text-navy-700"
+                  className="text-heading text-ink hover:text-ink-2"
                 >
                   {group.name}
                 </Link>
-                <span className="font-mono text-heading tabular-nums text-navy-900">
+                <span className="font-mono text-heading tabular-nums text-ink">
                   {formatHours(group.hours)} t
                 </span>
               </div>
 
-              <ul className="mt-3 flex flex-col gap-3 border-t border-line pt-3">
+              <ul className="mt-3 flex flex-col gap-3 pt-1">
                 {group.lines.map((line) => (
                   <li key={line.id} className="flex items-start gap-3">
                     <form
@@ -61,7 +63,7 @@ export function BillingList({
                         line.id,
                         !handled,
                       )}
-                      className="pt-1"
+                      className="shrink-0"
                     >
                       <button
                         type="submit"
@@ -71,23 +73,23 @@ export function BillingList({
                             ? "Merk som ikke håndtert"
                             : "Merk som håndtert"
                         }
-                        className={`flex size-8 shrink-0 items-center justify-center rounded-lg border text-meta font-bold ${
+                        className={`flex size-11 shrink-0 items-center justify-center rounded-full text-heading font-bold ${
                           handled
-                            ? "border-green-700/30 bg-green-50 text-green-700"
-                            : "border-line bg-white text-navy-100"
+                            ? "bg-brand text-white shadow-brand"
+                            : "bg-surface text-edge shadow-card"
                         }`}
                       >
                         {handled ? "✓" : ""}
                       </button>
                     </form>
                     <div className="min-w-0 flex-1">
-                      <p className="font-mono text-meta font-medium text-navy-700">
+                      <p className="text-meta tabular-nums text-ink-2">
                         {formatDate(line.at)} · {formatHours(line.hours)} t ·{" "}
                         {line.userName}
                       </p>
                       {line.comment && (
                         <p
-                          className={`text-body text-navy-900 ${
+                          className={`text-body text-ink ${
                             handled ? "opacity-80" : ""
                           }`}
                         >

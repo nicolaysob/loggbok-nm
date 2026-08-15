@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { requireStaff } from "@/lib/dal";
+import { requireStaff, requireStaffAccess } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
 import { osloMidnight, osloYmd } from "@/lib/period";
 import { hoursFromClock } from "@/lib/time-clock";
@@ -25,7 +25,7 @@ function revalidateClock(customerId?: string | null) {
 }
 
 export async function startPayrollClock(): Promise<FormState> {
-  const user = await requireStaff();
+  const user = await requireStaffAccess("hours");
   if (user.payType !== "HOURLY") {
     return { message: "Bare timesbetalte kan stemple lønnstimer." };
   }
@@ -57,7 +57,7 @@ export async function startPayrollClock(): Promise<FormState> {
 export async function startExtraWorkClock(
   customerId: string,
 ): Promise<FormState> {
-  const user = await requireStaff();
+  const user = await requireStaffAccess("hours");
 
   const customer = await db.customer.findUnique({
     where: { id: customerId },

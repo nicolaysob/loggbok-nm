@@ -33,7 +33,7 @@ export function AdminDeleteButton({
       onClick={handleClick}
       className={
         className ??
-        "min-h-12 rounded-md px-3 text-meta font-semibold text-red-700 transition-colors active:bg-red-50 disabled:opacity-50"
+        "min-h-12 rounded-xl px-3 text-meta font-semibold text-danger transition-colors active:bg-danger-soft disabled:opacity-50"
       }
     >
       {pending ? "Sletter …" : "Slett"}

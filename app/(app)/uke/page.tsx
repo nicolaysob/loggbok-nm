@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
 import { decimalToNumber, formatHours } from "@/lib/format";
 import { currentWeek } from "@/lib/period";
-import { cardClass, cardStaticClass } from "@/lib/ui";
+import { cardClass, outlineActionClass } from "@/lib/ui";
 
 export default async function WeekSummaryPage() {
   await requireAdmin();
@@ -68,37 +68,51 @@ export default async function WeekSummaryPage() {
   const totalOpen = rows.reduce((sum, item) => sum + item.openIssues, 0);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3">
+    <div className="mx-auto flex w-full max-w-lg animate-rise flex-col gap-6">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-display tracking-tight">Denne uken</h1>
-          <p className="text-body text-navy-700">{week.label}</p>
+          <h1 className="text-display">Denne uken</h1>
+          <p className="text-body text-ink-2">{week.label}</p>
         </div>
         <Link
           href="/mnd"
-          className="text-meta font-medium text-navy-700 hover:text-navy-900"
+          className={`flex min-h-[4.5rem] items-center justify-between px-4 ${outlineActionClass}`}
         >
-          Se fakturering →
+          <span className="text-heading font-semibold">Se fakturering</span>
+          <span
+            aria-hidden
+            className="flex size-11 items-center justify-center rounded-full bg-sunken text-ink-2"
+          >
+            <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 5 7 7-7 7" /></svg>
+          </span>
         </Link>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className={`px-4 py-4 ${cardStaticClass}`}>
-          <p className="text-meta font-medium text-navy-700">Ekstraarbeid</p>
-          <p className="font-mono text-display tabular-nums text-navy-900">
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="rounded-2xl bg-surface px-3.5 py-4 shadow-card">
+          <p className="text-meta text-ink-2">Ekstraarbeid</p>
+          <p className="mt-1.5 font-mono text-title tabular-nums text-ink">
             {formatHours(totalHours)} t
           </p>
         </div>
-        <div className={`px-4 py-4 ${cardStaticClass}`}>
-          <p className="text-meta font-medium text-navy-700">Åpne avvik</p>
-          <p className="font-mono text-display tabular-nums text-navy-900">
+        <div
+          className={`rounded-xl px-3.5 py-4 shadow-card ${
+            totalOpen > 0 ? "bg-danger-soft" : "bg-surface"
+          }`}
+        >
+          <p className="text-meta text-ink-2">Åpne avvik</p>
+          <p
+            className={`mt-1.5 font-mono text-title tabular-nums ${
+              totalOpen > 0 ? "text-danger" : "text-ink"
+            }`}
+          >
             {totalOpen}
           </p>
         </div>
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-body text-navy-700">
+        <p className="rounded-2xl bg-surface px-5 py-5 text-body text-ink-2 shadow-card">
           Ingen ekstraarbeid denne uken, og ingen åpne avvik.
         </p>
       ) : (
@@ -107,20 +121,30 @@ export default async function WeekSummaryPage() {
             <li key={item.customerId}>
               <Link
                 href={`/kunde/${item.customerId}`}
-                className={`flex min-h-16 flex-col justify-center gap-1 px-4 py-3 active:bg-navy-50 ${cardClass}`}
+                className={`flex min-h-[4.5rem] items-center justify-between gap-3 px-4 py-3 ${cardClass}`}
               >
-                <span className="text-heading text-navy-900">{item.name}</span>
-                <span className="font-mono text-meta font-medium text-navy-700">
-                  {formatHours(item.hours)} t ekstraarbeid
-                  {item.openIssues > 0 && (
-                    <>
-                      {" · "}
-                      <span className="font-semibold text-red-700">
-                        {item.openIssues}{" "}
-                        {item.openIssues === 1 ? "åpent avvik" : "åpne avvik"}
-                      </span>
-                    </>
-                  )}
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate text-heading font-semibold text-ink">
+                    {item.name}
+                  </span>
+                  <span className="text-meta tabular-nums text-ink-2">
+                    {formatHours(item.hours)} t ekstraarbeid
+                    {item.openIssues > 0 && (
+                      <>
+                        {" · "}
+                        <span className="font-semibold text-danger">
+                          {item.openIssues}{" "}
+                          {item.openIssues === 1 ? "åpent avvik" : "åpne avvik"}
+                        </span>
+                      </>
+                    )}
+                  </span>
+                </span>
+                <span
+                  aria-hidden
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-sunken text-ink-2"
+                >
+                  <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 5 7 7-7 7" /></svg>
                 </span>
               </Link>
             </li>

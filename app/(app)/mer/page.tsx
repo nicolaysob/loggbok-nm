@@ -1,89 +1,68 @@
 import Link from "next/link";
 import { logout } from "@/app/actions/auth";
 import { requireStaff } from "@/lib/dal";
-import { outlineActionClass, cardStaticClass } from "@/lib/ui";
+import { payTypeLabels, roleLabels } from "@/lib/labels";
+import {
+  SettingsButton,
+  SettingsGroup,
+  SettingsLink,
+} from "@/components/settings-list";
 
 export default async function MorePage() {
   const user = await requireStaff();
   const isAdmin = user.role === "ADMIN";
-  const showTimelist = !isAdmin && user.payType === "HOURLY";
-
-  const sections: { title?: string; links: { href: string; label: string }[] }[] =
-    [
-      {
-        links: [
-          { href: "/", label: "Hjem" },
-          { href: "/kalender", label: "Kalender" },
-          ...(isAdmin ? [{ href: "/ukeplan", label: "Ukeplan" }] : []),
-          ...(showTimelist ? [{ href: "/timeliste", label: "Timeliste" }] : []),
-        ],
-      },
-      ...(isAdmin
-        ? [
-            {
-              title: "Økonomi",
-              links: [
-                { href: "/lonn", label: "Lønn" },
-                { href: "/uke", label: "Uken" },
-                { href: "/mnd", label: "Fakturering" },
-              ],
-            },
-            {
-              title: "Oppsett",
-              links: [
-                { href: "/kunder", label: "Kunder" },
-                { href: "/brukere", label: "Brukere" },
-                { href: "/oppdragstyper", label: "Typer" },
-              ],
-            },
-          ]
-        : []),
-    ];
+  const role = roleLabels[user.role];
+  const pay =
+    user.role === "EMPLOYEE" ? payTypeLabels[user.payType] : null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-display tracking-tight">Mer</h1>
+    <div className="mx-auto flex w-full max-w-lg animate-rise flex-col gap-8">
+      <div>
+        <h1 className="text-display">{user.name}</h1>
+        <p className="mt-1 text-meta text-ink-2">
+          {pay ? `${role} · ${pay}` : role}
+        </p>
+      </div>
 
-      {sections.map((section) => (
-        <section
-          key={section.title ?? "main"}
-          className={`flex flex-col overflow-hidden ${cardStaticClass}`}
+      <SettingsGroup>
+        <SettingsLink href="/profil" label="Profil" />
+      </SettingsGroup>
+
+      {isAdmin ? (
+        <>
+          <SettingsGroup title="Økonomi">
+            <SettingsLink href="/lonn" label="Lønn" />
+            <SettingsLink href="/uke" label="Uken" />
+            <SettingsLink href="/mnd" label="Fakturering" />
+          </SettingsGroup>
+          <SettingsGroup title="Oppsett">
+            <SettingsLink href="/ukeplan" label="Ukeplan" />
+            <SettingsLink href="/kunder" label="Kunder" />
+            <SettingsLink href="/brukere" label="Brukere" />
+            <SettingsLink href="/oppdragstyper" label="Typer" />
+          </SettingsGroup>
+        </>
+      ) : null}
+
+      <SettingsGroup>
+        <SettingsLink href="/support" label="Support" />
+        <SettingsLink href="/personvern" label="Personvern" />
+      </SettingsGroup>
+
+      <SettingsGroup>
+        <form action={logout}>
+          <SettingsButton label="Logg ut" />
+        </form>
+      </SettingsGroup>
+
+      <div className="flex justify-center pb-2">
+        <Link
+          href="/mer/slett-konto"
+          className="text-meta font-medium text-danger"
         >
-          {section.title && (
-            <p className="border-b border-line px-4 py-2.5 text-meta font-medium text-navy-700">
-              {section.title}
-            </p>
-          )}
-          <ul className="flex flex-col divide-y divide-line">
-            {section.links.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="flex min-h-14 items-center px-4 text-body font-medium text-navy-900 active:bg-navy-50"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-
-      <form action={logout}>
-        <button
-          type="submit"
-          className={`flex min-h-14 w-full items-center justify-center rounded-md px-4 text-body font-medium ${outlineActionClass}`}
-        >
-          Logg ut
-        </button>
-      </form>
-
-      <Link
-        href="/personvern"
-        className="text-center text-meta font-medium text-navy-700"
-      >
-        Personvern
-      </Link>
+          Slett konto
+        </Link>
+      </div>
     </div>
   );
 }

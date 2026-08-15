@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireAdmin, requireUser } from "@/lib/dal";
+import { requireAdmin, requireStaff, requireStaffAccess } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
 import { occurredAtFromDateTimeLocal } from "@/lib/period";
 import { photosFromFormData } from "@/lib/photos";
@@ -47,7 +47,7 @@ export async function updateLogEntryComment(
   logEntryId: string,
   comment: string,
 ): Promise<{ error?: string }> {
-  const user = await requireUser();
+  const user = await requireStaff();
 
   const entry = await db.logEntry.findUnique({
     where: { id: logEntryId },
@@ -103,7 +103,7 @@ export async function createVisitNote(
   _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireStaffAccess("log");
 
   const result = visitNoteSchema.safeParse({
     comment: formData.get("comment"),
@@ -147,7 +147,7 @@ export async function completeTasks(
   _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireStaffAccess("log");
 
   const areaId = await primaryAreaId(customerId);
   if (!areaId) return { message: MISSING_AREA };
@@ -190,7 +190,7 @@ export async function createExtraWork(
   _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireStaffAccess("hours");
 
   const result = extraWorkSchema.safeParse({
     hours: formData.get("hours"),

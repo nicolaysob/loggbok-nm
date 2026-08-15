@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useActionState,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -15,16 +9,11 @@ import {
   startPayrollClock,
   stopTimeClock,
 } from "@/app/actions/time-clock";
+import { CommentField } from "@/components/comment-field";
 import { FieldError } from "@/components/mobile-form";
 import { formatHours } from "@/lib/format";
 import { hoursFromClock } from "@/lib/time-clock";
 import type { FormState } from "@/lib/validation";
-import {
-  cardStaticClass,
-  noticeClass,
-  solidActionClass,
-  textareaClass,
-} from "@/lib/ui";
 
 export type OpenClockProp = {
   kind: "PAYROLL" | "EXTRA_WORK";
@@ -60,10 +49,18 @@ function isActiveHere(
   );
 }
 
-const roundButtonClass =
-  "flex size-[4.5rem] shrink-0 items-center justify-center rounded-full " +
-  "bg-navy-900 text-white shadow-card transition-all duration-150 " +
-  "hover:bg-navy-800 active:scale-[0.98] disabled:opacity-50";
+const clockFaceClass =
+  "font-mono text-[3.5rem] leading-none tracking-tight tabular-nums sm:text-6xl";
+
+const fullActionClass =
+  "flex min-h-16 w-full items-center justify-center gap-2.5 rounded-2xl " +
+  "text-body font-bold transition-colors";
+
+const startActionClass =
+  "bg-brand text-on-brand active:bg-brand-strong disabled:opacity-50";
+
+/** Hvit knapp på mørk flate — teksten må være mørk i begge moduser. */
+const stopActionClass = "bg-white text-hero active:bg-white/85";
 
 export function TimeClockPanel({
   mode,
@@ -78,7 +75,7 @@ export function TimeClockPanel({
   const foreign = openClock && !active;
 
   return (
-    <section className={`flex flex-col gap-4 px-4 py-5 ${cardStaticClass}`}>
+    <section className="flex flex-col gap-5 rounded-3xl bg-hero px-5 py-7 text-white">
       {foreign && openClock ? (
         <ForeignClockNotice openClock={openClock} />
       ) : active && openClock ? (
@@ -107,7 +104,7 @@ function ForeignClockNotice({
 }) {
   if (openClock.kind === "PAYROLL") {
     return (
-      <p className={noticeClass}>
+      <p className="text-body text-white/80">
         Du har en lønnsstempling i gang.{" "}
         <Link href="/timeliste" className="font-semibold underline">
           Gå til timelisten
@@ -123,7 +120,7 @@ function ForeignClockNotice({
   const name = openClock.customerName ?? "en annen kunde";
 
   return (
-    <p className={noticeClass}>
+    <p className="text-body text-white/80">
       Du har stempling på {name}.{" "}
       <Link href={href} className="font-semibold underline">
         Avslutt der først
@@ -145,38 +142,52 @@ function IdleClock({
   const [message, setMessage] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-4">
-        <p
-          className="font-mono text-[2.5rem] leading-none tracking-tight tabular-nums text-navy-100 sm:text-[2.75rem]"
-          aria-hidden
-        >
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
+        <p className="text-eyebrow uppercase text-white/50">
+          {mode === "PAYROLL" ? "Lønnstimer" : "Ekstraarbeid"}
+        </p>
+        <p className={`${clockFaceClass} text-white/35`} aria-hidden>
           00:00:00
         </p>
-        <button
-          type="button"
-          disabled={pending}
-          aria-label={pending ? "Starter stempling" : "Start stempling"}
-          onClick={() => {
-            setMessage(null);
-            startTransition(async () => {
-              const result =
-                mode === "PAYROLL"
-                  ? await startPayrollClock()
-                  : await startExtraWorkClock(customerId!);
-              if (result?.message && !result.message.includes("startet")) {
-                setMessage(result.message);
-              }
-              router.refresh();
-            });
-          }}
-          className={`${roundButtonClass} text-body font-semibold`}
-        >
-          {pending ? "…" : "Start"}
-        </button>
       </div>
+      <button
+        type="button"
+        disabled={pending}
+        aria-label={pending ? "Starter stempling" : "Start stempling"}
+        onClick={() => {
+          setMessage(null);
+          startTransition(async () => {
+            const result =
+              mode === "PAYROLL"
+                ? await startPayrollClock()
+                : await startExtraWorkClock(customerId!);
+            if (result?.message && !result.message.includes("startet")) {
+              setMessage(result.message);
+            }
+            router.refresh();
+          });
+        }}
+        className={`${fullActionClass} ${startActionClass}`}
+      >
+        {pending ? (
+          "Starter …"
+        ) : (
+          <>
+            <svg
+              aria-hidden
+              viewBox="0 0 24 24"
+              className="size-5"
+              fill="currentColor"
+            >
+              <path d="M8 5.6a1 1 0 0 1 1.52-.85l9 6.4a1 1 0 0 1 0 1.7l-9 6.4A1 1 0 0 1 8 18.4Z" />
+            </svg>
+            Start stempling
+          </>
+        )}
+      </button>
       {message && (
-        <p role="status" className="text-body font-medium text-navy-800">
+        <p role="status" className="text-body font-medium text-white/80">
           {message}
         </p>
       )}
@@ -197,6 +208,7 @@ function ActiveClock({
   const [now, setNow] = useState(() => new Date());
   const [stoppedAt, setStoppedAt] = useState<Date | null>(null);
   const [hours, setHours] = useState(0.5);
+  const [comment, setComment] = useState("");
   const [state, formAction, pending] = useActionState<FormState, FormData>(
     stopTimeClock,
     undefined,
@@ -204,7 +216,6 @@ function ActiveClock({
   const [cancelPending, startCancel] = useTransition();
   const [cancelMessage, setCancelMessage] = useState<string | null>(null);
   const router = useRouter();
-  const commentRef = useRef<HTMLTextAreaElement>(null);
   const saving = stoppedAt !== null;
 
   useEffect(() => {
@@ -218,10 +229,6 @@ function ActiveClock({
     const tick = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(tick);
   }, [stoppedAt]);
-
-  useEffect(() => {
-    if (saving) commentRef.current?.focus();
-  }, [saving]);
 
   const displayAt = stoppedAt ?? now;
   const digital = formatDigitalElapsed(startedAt, displayAt);
@@ -239,57 +246,76 @@ function ActiveClock({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
         <p
-          className="font-mono text-[2.5rem] leading-none tracking-tight tabular-nums text-navy-900 sm:text-[2.75rem]"
+          className={`flex items-center gap-2 text-eyebrow uppercase ${
+            saving ? "text-white/50" : "text-brand"
+          }`}
+        >
+          {!saving ? (
+            <span
+              aria-hidden
+              className="live-dot size-2 shrink-0 rounded-full bg-brand"
+            />
+          ) : null}
+          {saving ? `Stoppet · ${title}` : `Pågår · ${title}`}
+        </p>
+        <p
+          className={`${clockFaceClass} text-white`}
           aria-live="off"
           aria-label={saving ? `Stoppet på ${digital}` : `Pågår, ${digital}`}
         >
           {digital}
         </p>
-
-        {saving ? (
-          <button
-            type="button"
-            disabled={pending}
-            aria-label="Fortsett stempling"
-            onClick={resumeClock}
-            className={`${roundButtonClass} text-meta font-semibold`}
-          >
-            Fortsett
-          </button>
-        ) : (
-          <button
-            type="button"
-            aria-label="Stopp stempling"
-            onClick={captureStopTime}
-            className={roundButtonClass}
-          >
-            <span className="size-7 rounded-sm bg-white" aria-hidden />
-          </button>
-        )}
       </div>
 
-      <p className="text-body font-semibold text-navy-900">{title}</p>
+      {saving ? (
+        <button
+          type="button"
+          disabled={pending}
+          aria-label="Fortsett stempling"
+          onClick={resumeClock}
+          className={`${fullActionClass} border-[1.5px] border-white/30 text-white active:bg-white/10`}
+        >
+          Fortsett
+        </button>
+      ) : (
+        <button
+          type="button"
+          aria-label="Stopp stempling"
+          onClick={captureStopTime}
+          className={`${fullActionClass} ${stopActionClass}`}
+        >
+          <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            className="size-4.5"
+            fill="currentColor"
+          >
+            <rect x="6" y="6" width="12" height="12" rx="2.5" />
+          </svg>
+          Stopp
+        </button>
+      )}
 
       {saving && (
         <form action={formAction} className="flex flex-col gap-3">
           <input type="hidden" name="hours" value={hours} />
-          <textarea
-            ref={commentRef}
+          <CommentField
             id="clock-comment"
             name="comment"
-            rows={2}
-            className={textareaClass}
+            value={comment}
+            onChange={setComment}
+            rows={3}
             placeholder={commentPlaceholder}
-            aria-label="Kommentar"
+            ariaLabel="Kommentar"
           />
           <FieldError messages={state?.errors?.comment} />
           <FieldError messages={state?.errors?.hours} />
 
           {state?.message && (
-            <p role="status" className="text-body font-semibold text-green-700">
+            <p role="status" className="text-body font-semibold text-white">
               {state.message}
             </p>
           )}
@@ -297,7 +323,7 @@ function ActiveClock({
           <button
             type="submit"
             disabled={pending}
-            className={`min-h-14 w-full rounded-md text-body font-semibold ${solidActionClass}`}
+            className={`${fullActionClass} ${startActionClass}`}
           >
             {pending ? "Lagrer …" : `Lagre ${formatHours(hours)} t`}
           </button>
@@ -320,12 +346,12 @@ function ActiveClock({
             router.refresh();
           });
         }}
-        className="self-start text-meta font-medium text-navy-700 underline-offset-2 hover:underline"
+        className="min-h-11 self-start text-meta font-semibold text-white/45 underline-offset-4 hover:underline"
       >
         {cancelPending ? "Avbryter …" : "Avbryt"}
       </button>
       {cancelMessage && (
-        <p role="status" className="text-body font-medium text-navy-800">
+        <p role="status" className="text-body font-medium text-white/80">
           {cancelMessage}
         </p>
       )}

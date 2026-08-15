@@ -6,10 +6,17 @@ import {
   createUser,
   deleteUser,
   resetUserPassword,
+  setUserAccess,
   setUserActive,
   setUserPayType,
   setUserRole,
 } from "@/app/actions/users";
+import {
+  capabilityLabels,
+  STAFF_CAPABILITIES,
+  type AccessFlags,
+  type StaffCapability,
+} from "@/lib/access";
 import {
   payTypeLabels,
   payTypeOptions,
@@ -31,7 +38,7 @@ export type UserRow = {
   active: boolean;
   customerName: string | null;
   isSelf: boolean;
-};
+} & AccessFlags;
 
 export function UsersManager({
   users,
@@ -48,9 +55,11 @@ export function UsersManager({
       <CreateUserForm customers={customers} />
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-heading text-navy-900">Ansatte</h2>
+        <h2 className="text-heading text-ink">Ansatte</h2>
         {staff.length === 0 ? (
-          <p className="text-body text-navy-700">Ingen ansatte ennå.</p>
+          <p className="rounded-2xl border border-hair bg-surface px-5 py-5 text-body text-ink-2">
+            Ingen ansatte.
+          </p>
         ) : (
           <ul className="flex flex-col gap-3">
             {staff.map((user) => (
@@ -61,10 +70,10 @@ export function UsersManager({
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-heading text-navy-900">Kunder</h2>
+        <h2 className="text-heading text-ink">Kunder</h2>
         {customerUsers.length === 0 ? (
-          <p className="text-body text-navy-700">
-            Ingen kundekontoer ennå. Opprett med rolle «Kunde».
+          <p className="rounded-2xl border border-hair bg-surface px-5 py-5 text-body text-ink-2">
+            Ingen kundekontoer.
           </p>
         ) : (
           <ul className="flex flex-col gap-3">
@@ -87,7 +96,7 @@ function UserCard({ user }: { user: UserRow }) {
 
   return (
     <li
-      className={`rounded-md border border-line bg-white ${
+      className={`rounded-2xl border border-hair bg-surface ${
         user.active ? "" : "opacity-70"
       }`}
     >
@@ -95,18 +104,18 @@ function UserCard({ user }: { user: UserRow }) {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="flex min-h-16 w-full items-center gap-3 px-4 py-3.5 text-left active:bg-navy-50"
+        className="flex min-h-16 w-full items-center gap-3 px-4 py-3.5 text-left active:bg-sunken"
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-heading text-navy-900">
+          <span className="block text-heading text-ink">
             {user.name}
             {user.isSelf && (
-              <span className="ml-2 text-meta font-medium text-navy-700">
+              <span className="ml-2 text-meta font-medium text-ink-2">
                 (deg)
               </span>
             )}
           </span>
-          <span className="block font-mono text-meta text-navy-700">
+          <span className="block text-meta tabular-nums text-ink-2">
             {user.username}
             {user.role === "CUSTOMER" && user.customerName
               ? ` · ${user.customerName}`
@@ -118,25 +127,28 @@ function UserCard({ user }: { user: UserRow }) {
         <span
           className={`shrink-0 rounded-full px-3 py-1 text-meta font-semibold ${
             user.role === "ADMIN"
-              ? "bg-brand/10 text-brand-dark"
+              ? "bg-brand/10 text-brand-strong"
               : user.role === "CUSTOMER"
-                ? "bg-navy-50 text-navy-800"
-                : "bg-navy-50 text-navy-700"
+                ? "bg-sunken text-ink"
+                : "bg-sunken text-ink-2"
           }`}
         >
           {roleLabels[user.role]}
           {!user.active && " · av"}
         </span>
-        <span aria-hidden className="text-heading text-navy-100">
+        <span
+          aria-hidden
+          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-sunken"
+        >
           {open ? "▾" : "›"}
         </span>
       </button>
 
       {open && (
-        <div className="flex flex-col gap-3 border-t border-line px-4 py-4">
+        <div className="flex flex-col gap-3 px-4 py-4">
           {user.role !== "CUSTOMER" && (
             <>
-              <p className="text-meta font-semibold text-navy-700">Rolle</p>
+              <p className="text-meta font-semibold text-ink-2">Rolle</p>
               <div className="flex flex-wrap gap-2">
                 {staffRoleOptions.map(([role, label]) => (
                   <form
@@ -146,7 +158,7 @@ function UserCard({ user }: { user: UserRow }) {
                     <button
                       type="submit"
                       disabled={user.role === role}
-                      className={`min-h-12 rounded-md px-4 text-meta font-semibold disabled:opacity-40 ${
+                      className={`min-h-12 rounded-xl px-4 text-meta font-semibold disabled:opacity-40 ${
                         user.role === role
                           ? solidActionClass
                           : outlineActionClass
@@ -158,7 +170,7 @@ function UserCard({ user }: { user: UserRow }) {
                 ))}
               </div>
 
-              <p className="text-meta font-semibold text-navy-700">Lønn</p>
+              <p className="text-meta font-semibold text-ink-2">Lønn</p>
               <div className="flex flex-wrap gap-2">
                 {payTypeOptions.map(([payType, label]) => (
                   <form
@@ -168,7 +180,7 @@ function UserCard({ user }: { user: UserRow }) {
                     <button
                       type="submit"
                       disabled={user.payType === payType}
-                      className={`min-h-12 rounded-md px-4 text-meta font-semibold disabled:opacity-40 ${
+                      className={`min-h-12 rounded-xl px-4 text-meta font-semibold disabled:opacity-40 ${
                         user.payType === payType
                           ? solidActionClass
                           : outlineActionClass
@@ -179,11 +191,15 @@ function UserCard({ user }: { user: UserRow }) {
                   </form>
                 ))}
               </div>
+
+              {user.role === "EMPLOYEE" ? (
+                <AccessToggles user={user} />
+              ) : null}
             </>
           )}
 
           {user.role === "CUSTOMER" && user.customerName && (
-            <p className="text-body text-navy-700">
+            <p className="text-body text-ink-2">
               Kundekonto for{" "}
               <span className="font-semibold">{user.customerName}</span>
             </p>
@@ -193,7 +209,7 @@ function UserCard({ user }: { user: UserRow }) {
             <form action={setUserActive.bind(null, user.id, !user.active)}>
               <button
                 type="submit"
-                className={`min-h-12 w-full rounded-md px-4 text-meta font-semibold ${outlineActionClass}`}
+                className={`min-h-12 w-full rounded-xl px-4 text-meta font-semibold ${outlineActionClass}`}
               >
                 {user.active ? "Deaktiver" : "Aktiver"}
               </button>
@@ -217,7 +233,7 @@ function UserCard({ user }: { user: UserRow }) {
             >
               <button
                 type="submit"
-                className="min-h-12 w-full rounded-md border border-red-700/30 px-4 text-meta font-semibold text-red-700 active:bg-red-50"
+                className="min-h-12 w-full rounded-2xl bg-surface px-4 text-meta font-semibold text-danger active:bg-danger-soft"
               >
                 Slett bruker
               </button>
@@ -249,7 +265,7 @@ function CreateUserForm({ customers }: { customers: CustomerOption[] }) {
     <form
       ref={formRef}
       action={formAction}
-      className="flex max-w-lg flex-col gap-3 rounded-md border border-line bg-white p-4"
+      className="flex max-w-lg flex-col gap-3 rounded-2xl border border-hair bg-surface p-5"
     >
       <p className="text-heading">Ny bruker</p>
 
@@ -351,6 +367,43 @@ function CreateUserForm({ customers }: { customers: CustomerOption[] }) {
         <Feedback message={state?.message} />
       </div>
     </form>
+  );
+}
+
+function AccessToggles({ user }: { user: UserRow }) {
+  const flags: Record<StaffCapability, boolean> = {
+    log: user.canLog,
+    issues: user.canIssues,
+    hours: user.canHours,
+    todos: user.canTodos,
+    calendar: user.canCalendar,
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-meta font-semibold text-ink-2">Tilgang</p>
+      <div className="flex flex-wrap gap-2">
+        {STAFF_CAPABILITIES.map((capability) => {
+          const on = flags[capability];
+          return (
+            <form
+              key={capability}
+              action={setUserAccess.bind(null, user.id, capability, !on)}
+            >
+              <button
+                type="submit"
+                aria-pressed={on}
+                className={`min-h-12 rounded-xl px-4 text-meta font-semibold ${
+                  on ? solidActionClass : outlineActionClass
+                }`}
+              >
+                {capabilityLabels[capability]}
+              </button>
+            </form>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

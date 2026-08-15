@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { IssueStatus } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
-import { requireAdmin, requireUser } from "@/lib/dal";
+import { requireAdmin, requireStaff, requireStaffAccess } from "@/lib/dal";
 import { primaryAreaId } from "@/lib/customer";
 import { photosFromFormData } from "@/lib/photos";
 import { issueSchema, type FormState } from "@/lib/validation";
@@ -15,7 +15,7 @@ export async function createIssue(
   _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const user = await requireUser();
+  const user = await requireStaffAccess("issues");
 
   const result = issueSchema.safeParse({
     description: formData.get("description"),
@@ -54,7 +54,7 @@ export async function createIssue(
 }
 
 export async function setIssueStatus(issueId: string, status: IssueStatus) {
-  await requireUser();
+  await requireStaffAccess("issues");
 
   const issue = await db.issue.update({
     where: { id: issueId },
@@ -96,7 +96,7 @@ export async function updateIssueDescription(
   issueId: string,
   description: string,
 ): Promise<{ error?: string }> {
-  const user = await requireUser();
+  const user = await requireStaff();
 
   const result = issueSchema.safeParse({ description });
   if (!result.success) {

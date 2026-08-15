@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Source_Sans_3 } from "next/font/google";
+import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { AddToHomeScreenPrompt } from "@/components/add-to-home-screen";
+import { CapacitorShell } from "@/components/capacitor-shell";
 import "./globals.css";
 
-const sourceSans = Source_Sans_3({
-  variable: "--font-source-sans",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-// Kun til tall — timer, datoer og antall skal stå i kolonne
 const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
   subsets: ["latin"],
@@ -25,6 +25,9 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Loggbok",
   },
+  other: {
+    "supported-color-schemes": "light dark",
+  },
   formatDetection: {
     telephone: false,
   },
@@ -34,7 +37,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#16a34a",
+  // Må matche --canvas i globals.css for begge modusene, ellers blinker
+  // statuslinja i feil farge når appen åpnes.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f3ef" },
+    { media: "(prefers-color-scheme: dark)", color: "#100f0d" },
+  ],
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -45,9 +54,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="no"
-      className={`${sourceSans.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <CapacitorShell />
         <AddToHomeScreenPrompt />
         {children}
       </body>

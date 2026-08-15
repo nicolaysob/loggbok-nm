@@ -1,78 +1,202 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════
+   Designsystem «Felt»
+
+   Alle farger er semantiske og bytter automatisk med telefonens
+   lys/mørk-innstilling. Bruk aldri rå fargekoder i komponenter —
+   bruk tokenene under, ellers ryker mørk modus.
+
+   canvas   sidebakgrunn        ink     hovedtekst
+   surface  kort og felt        ink-2   sekundærtekst
+   sunken   nedsenket flate     ink-3   svak tekst / etiketter
+   hero     mørk toppseksjon    hair    hårstrek
+   brand    handlingsfarge      edge    tydelig kant
+   ═══════════════════════════════════════════════════════════════ */
+
 :root {
   color-scheme: light;
+
+  --canvas: #f5f3ef;
+  --sunken: #ebe8e1;
+  --surface: #ffffff;
+  --raised: #ffffff;
+
+  --ink: #15140f;
+  --ink-2: #5d5a51;
+  --ink-3: #8c8a80;
+
+  --hair: #e4e0d7;
+  --edge: #d3cec3;
+
+  /* Mørk toppseksjon — bærer alltid hvit tekst, i begge moduser */
+  --hero: #15140f;
+  --hero-2: #2a2926;
+
+  --brand: #15803d;
+  --brand-strong: #116331;
+  --brand-soft: #e3f1e8;
+  --on-brand: #ffffff;
+
+  --ok: #15803d;
+  --ok-soft: #e3f1e8;
+  --danger: #b42318;
+  --danger-soft: #fdeeec;
+  --warn: #b54708;
+  --warn-soft: #fdf2e7;
+
+  --sh-1: 0 1px 2px rgb(21 20 15 / 0.05), 0 10px 26px -16px rgb(21 20 15 / 0.3);
+  --sh-2: 0 6px 14px -6px rgb(21 20 15 / 0.2),
+    0 22px 44px -20px rgb(21 20 15 / 0.45);
+  --sh-brand: 0 6px 16px -8px rgb(21 128 61 / 0.6);
 }
 
-@theme {
-  /* Myk helse-app-følelse: luft, én aksent, runde kort */
-  --color-navy-900: #111827;
-  --color-navy-800: #374151;
-  --color-navy-700: #6b7280;
-  --color-navy-100: #e5e7eb;
-  --color-navy-50: #f3f4f6;
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
 
-  --color-line: #eef0f3;
-  --color-line-strong: #e5e7eb;
+    --canvas: #100f0d;
+    --sunken: #232220;
+    --surface: #1a1917;
+    --raised: #201f1c;
 
-  --color-page: #f4f5f7;
+    --ink: #f5f3ee;
+    --ink-2: #a8a59b;
+    --ink-3: #7b786f;
 
-  --color-brand: #16a34a;
-  --color-brand-dark: #15803d;
-  --color-brand-50: #f0fdf4;
+    --hair: #2c2a26;
+    --edge: #3a3733;
 
-  --color-green-700: #15803d;
-  --color-green-50: #f0fdf4;
+    --hero: #050504;
+    --hero-2: #1f1e1b;
 
-  --color-red-700: #dc2626;
-  --color-red-50: #fef2f2;
+    /* Lysere grønt — #15803d har for lav kontrast mot mørk flate */
+    --brand: #3fb463;
+    --brand-strong: #55c878;
+    --brand-soft: #16301f;
+    --on-brand: #08160d;
 
-  --color-amber-700: #d97706;
-  --color-amber-50: #fffbeb;
+    --ok: #3fb463;
+    --ok-soft: #16301f;
+    --danger: #f2705c;
+    --danger-soft: #331a16;
+    --warn: #e0913f;
+    --warn-soft: #2e2114;
 
-  --radius-md: 1.25rem;
-  --radius-lg: 1.75rem;
-
-  --text-display: 1.75rem;
-  --text-display--line-height: 1.2;
-  --text-display--font-weight: 700;
-  --text-display--letter-spacing: -0.03em;
-  --text-heading: 1.0625rem;
-  --text-heading--line-height: 1.35;
-  --text-heading--font-weight: 600;
-  --text-heading--letter-spacing: -0.015em;
-  --text-body: 1rem;
-  --text-body--line-height: 1.5;
-  --text-meta: 0.8125rem;
-  --text-meta--line-height: 1.4;
-
-  --shadow-card: 0 2px 4px rgb(17 24 39 / 0.06), 0 8px 18px rgb(17 24 39 / 0.12);
-  --shadow-soft: 0 4px 8px rgb(17 24 39 / 0.08), 0 12px 24px rgb(17 24 39 / 0.12);
-  --shadow-lift: 0 6px 12px rgb(17 24 39 / 0.1), 0 16px 32px rgb(17 24 39 / 0.14);
-  --shadow-brand: 0 4px 8px rgb(22 163 74 / 0.22), 0 10px 22px rgb(22 163 74 / 0.28);
+    --sh-1: 0 1px 2px rgb(0 0 0 / 0.45), 0 10px 26px -16px rgb(0 0 0 / 0.8);
+    --sh-2: 0 6px 14px -6px rgb(0 0 0 / 0.55), 0 22px 44px -20px rgb(0 0 0 / 0.9);
+    --sh-brand: 0 6px 16px -8px rgb(63 180 99 / 0.45);
+  }
 }
 
 @theme inline {
-  --font-sans: var(--font-source-sans);
+  --color-canvas: var(--canvas);
+  --color-sunken: var(--sunken);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+
+  --color-hair: var(--hair);
+  --color-edge: var(--edge);
+
+  --color-hero: var(--hero);
+  --color-hero-2: var(--hero-2);
+
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+
+  --shadow-card: var(--sh-1);
+  --shadow-lift: var(--sh-2);
+  --shadow-brand: var(--sh-brand);
+
+  --font-sans: var(--font-jakarta);
   --font-mono: var(--font-plex-mono);
 }
 
+@theme {
+  /* Typografi. Brødteksten er 17px — appen leses utendørs, med hansker
+     og regn på skjermen. 13px (micro) er absolutt nedre grense. */
+  --text-display: 1.875rem;
+  --text-display--line-height: 1.1;
+  --text-display--font-weight: 800;
+  --text-display--letter-spacing: -0.032em;
+
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.2;
+  --text-title--font-weight: 700;
+  --text-title--letter-spacing: -0.026em;
+
+  --text-heading: 1.0625rem;
+  --text-heading--line-height: 1.3;
+  --text-heading--font-weight: 700;
+  --text-heading--letter-spacing: -0.012em;
+
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.45;
+
+  /* Sekundærlinja under en tittel, hjelpetekst, knappetekst i lister */
+  --text-meta: 0.9375rem;
+  --text-meta--line-height: 1.35;
+
+  --text-micro: 0.8125rem;
+  --text-micro--line-height: 1.3;
+  --text-micro--font-weight: 600;
+
+  /* Seksjonsoverskrifter: SPERRET VERSAL */
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1;
+  --text-eyebrow--font-weight: 800;
+  --text-eyebrow--letter-spacing: 0.1em;
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+}
+
 body {
-  background: var(--color-page);
-  color: var(--color-navy-900);
-  font-family: var(--font-source-sans), system-ui, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-jakarta), system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--brand-soft);
+  color: var(--brand);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-brand);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Datovelgeren og andre native kontroller må følge samme tema */
+input,
+textarea,
+select,
+button {
+  font: inherit;
+  color-scheme: inherit;
 }
 
 @keyframes rise-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -80,9 +204,74 @@ body {
   }
 }
 
+@keyframes profile-drawer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes profile-drawer-dim {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.profile-drawer {
+  animation: profile-drawer 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.profile-drawer-dim {
+  animation: profile-drawer-dim 0.28s ease-out both;
+}
+
+.live-dot {
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .animate-rise {
-    animation: rise-in 0.28s ease-out both;
+    animation: rise-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .animate-toast {
+    animation: toast-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-drawer,
+  .profile-drawer-dim,
+  .live-dot {
+    animation: none;
   }
 }
 
