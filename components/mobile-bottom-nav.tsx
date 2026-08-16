@@ -126,7 +126,7 @@ export function MobileBottomNav({
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-32 bg-linear-to-t from-canvas from-30% to-transparent"
       />
-      <div className="pointer-events-auto mx-auto flex max-w-lg items-stretch gap-1.5 rounded-[1.375rem] bg-hero p-1.5 shadow-lift dark:border dark:border-hero-2">
+      <div className="pointer-events-auto mx-auto flex max-w-lg items-stretch gap-1.5 rounded-[1.375rem] bg-hero p-1.5 shadow-lift">
         {tabs.map((tab) => {
           const active = isLinkActive(tab.href, pathname);
           return (

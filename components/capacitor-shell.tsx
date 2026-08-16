@@ -18,29 +18,17 @@ export function CapacitorShell() {
     let removeBack: { remove: () => Promise<void> } | undefined;
     let removeKeyboard: { remove: () => Promise<void> } | undefined;
 
-    // Statuslinja må følge telefonens lys/mørk-innstilling, ellers blir
-    // klokka usynlig mot bakgrunnen når brukeren bytter modus.
-    const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-    async function syncStatusBar() {
-      try {
-        await StatusBar.setStyle({
-          style: darkQuery.matches ? Style.Dark : Style.Light,
-        });
-        await StatusBar.setBackgroundColor({
-          color: darkQuery.matches ? "#100f0d" : "#f5f3ef",
-        });
-      } catch {
-        // setBackgroundColor finnes ikke på iOS — stilen er nok der
-      }
-    }
-
-    darkQuery.addEventListener("change", syncStatusBar);
-
     void (async () => {
       try {
         await StatusBar.setOverlaysWebView({ overlay: false });
-        await syncStatusBar();
+        // Appen er alltid i lys modus, så statuslinja skal alltid ha
+        // mørk tekst på lys bakgrunn — også om telefonen står mørkt.
+        await StatusBar.setStyle({ style: Style.Light });
+        try {
+          await StatusBar.setBackgroundColor({ color: "#f5f3ef" });
+        } catch {
+          // setBackgroundColor finnes ikke på iOS — stilen er nok der
+        }
         await SplashScreen.hide();
       } catch {
         // Plugins kan mangle i web-preview
@@ -67,7 +55,6 @@ export function CapacitorShell() {
     })();
 
     return () => {
-      darkQuery.removeEventListener("change", syncStatusBar);
       void removeBack?.remove();
       void removeKeyboard?.remove();
     };

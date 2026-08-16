@@ -50,9 +50,6 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Loggbok",
   },
-  other: {
-    "supported-color-schemes": "light dark",
-  },
   formatDetection: {
     telephone: false,
   },
@@ -62,13 +59,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // Må matche --canvas i globals.css for begge modusene, ellers blinker
-  // statuslinja i feil farge når appen åpnes.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f3ef" },
-    { media: "(prefers-color-scheme: dark)", color: "#100f0d" },
-  ],
-  colorScheme: "light dark",
+  // Må matche --canvas i globals.css, ellers blinker statuslinja i
+  // feil farge når appen åpnes.
+  themeColor: "#f5f3ef",
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

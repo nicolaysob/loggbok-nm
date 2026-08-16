@@ -3,9 +3,11 @@
 /* ═══════════════════════════════════════════════════════════════
    Designsystem «Felt»
 
-   Alle farger er semantiske og bytter automatisk med telefonens
-   lys/mørk-innstilling. Bruk aldri rå fargekoder i komponenter —
-   bruk tokenene under, ellers ryker mørk modus.
+   Alle farger er semantiske. Bruk aldri rå fargekoder i komponenter —
+   bruk tokenene under, så henger uttrykket sammen overalt.
+
+   Appen er bevisst kun i lys modus: den brukes utendørs, og mørk
+   bakgrunn er vanskeligere å lese i sollys.
 
    canvas   sidebakgrunn        ink     hovedtekst
    surface  kort og felt        ink-2   sekundærtekst
@@ -29,7 +31,7 @@
   --hair: #e4e0d7;
   --edge: #d3cec3;
 
-  /* Mørk toppseksjon — bærer alltid hvit tekst, i begge moduser */
+  /* Mørk toppseksjon — bærer alltid hvit tekst */
   --hero: #15140f;
   --hero-2: #2a2926;
 
@@ -49,44 +51,6 @@
   --sh-2: 0 6px 14px -6px rgb(21 20 15 / 0.2),
     0 22px 44px -20px rgb(21 20 15 / 0.45);
   --sh-brand: 0 6px 16px -8px rgb(21 128 61 / 0.6);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-
-    --canvas: #100f0d;
-    --sunken: #232220;
-    --surface: #1a1917;
-    --raised: #201f1c;
-
-    --ink: #f5f3ee;
-    --ink-2: #a8a59b;
-    --ink-3: #7b786f;
-
-    --hair: #2c2a26;
-    --edge: #3a3733;
-
-    --hero: #050504;
-    --hero-2: #1f1e1b;
-
-    /* Lysere grønt — #15803d har for lav kontrast mot mørk flate */
-    --brand: #3fb463;
-    --brand-strong: #55c878;
-    --brand-soft: #16301f;
-    --on-brand: #08160d;
-
-    --ok: #3fb463;
-    --ok-soft: #16301f;
-    --danger: #f2705c;
-    --danger-soft: #331a16;
-    --warn: #e0913f;
-    --warn-soft: #2e2114;
-
-    --sh-1: 0 1px 2px rgb(0 0 0 / 0.45), 0 10px 26px -16px rgb(0 0 0 / 0.8);
-    --sh-2: 0 6px 14px -6px rgb(0 0 0 / 0.55), 0 22px 44px -20px rgb(0 0 0 / 0.9);
-    --sh-brand: 0 6px 16px -8px rgb(63 180 99 / 0.45);
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -116,23 +80,6 @@ html[data-season="vaar"] {
 html[data-season="host"] {
   --season: #b3591b;
   --season-soft: #f9ecdf;
-}
-
-@media (prefers-color-scheme: dark) {
-  html[data-season="vinter"] {
-    --season: #62b6e8;
-    --season-soft: #10293a;
-  }
-
-  html[data-season="vaar"] {
-    --season: #7cc75e;
-    --season-soft: #1a3010;
-  }
-
-  html[data-season="host"] {
-    --season: #e0913f;
-    --season-soft: #33220f;
-  }
 }
 
 @theme inline {
@@ -261,13 +208,11 @@ body {
   border-radius: 4px;
 }
 
-/* Datovelgeren og andre native kontroller må følge samme tema */
 input,
 textarea,
 select,
 button {
   font: inherit;
-  color-scheme: inherit;
 }
 
 @keyframes rise-in {
@@ -411,9 +356,8 @@ button {
 /* ═══════════════════════════════════════════════════════════════
    Utskrift — månedsrapporten i kundeportalen.
 
-   Må stå etter mørk modus-blokka: en kunde som skriver ut mens
-   telefonen står i mørk modus skal få svart tekst på hvitt papir,
-   ikke omvendt. Lik spesifisitet, så rekkefølgen avgjør.
+   Skjermfargene er varme og lette; på papir vil vi ha rein svart
+   tekst på hvitt og ingen skygger.
    ═══════════════════════════════════════════════════════════════ */
 @media print {
   :root {
