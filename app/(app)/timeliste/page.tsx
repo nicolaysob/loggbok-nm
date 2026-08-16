@@ -65,6 +65,8 @@ export default async function TimeSheetPage({
         customerId: openClockRow.customerId,
         customerName: openClockRow.customer?.name ?? null,
         startedAt: openClockRow.startedAt.toISOString(),
+        pausedAt: openClockRow.pausedAt?.toISOString() ?? null,
+        pausedMs: openClockRow.pausedMs,
       }
     : null;
 

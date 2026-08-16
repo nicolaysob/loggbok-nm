@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   cancelTimeClock,
+  pauseTimeClock,
+  resumeTimeClock,
   startExtraWorkClock,
   startPayrollClock,
   stopTimeClock,
@@ -12,7 +14,7 @@ import {
 import { CommentField } from "@/components/comment-field";
 import { FieldError } from "@/components/mobile-form";
 import { formatHours } from "@/lib/format";
-import { hoursFromClock } from "@/lib/time-clock";
+import { hoursFromClock, workedMs } from "@/lib/time-clock";
 import type { FormState } from "@/lib/validation";
 
 export type OpenClockProp = {
@@ -20,17 +22,18 @@ export type OpenClockProp = {
   customerId: string | null;
   customerName: string | null;
   startedAt: string;
+  /** ISO-tid mens en pause løper, ellers null */
+  pausedAt: string | null;
+  /** Sum av avsluttede pauser i millisekunder */
+  pausedMs: number;
 } | null;
 
 function pad2(value: number): string {
   return value.toString().padStart(2, "0");
 }
 
-function formatDigitalElapsed(startedAt: Date, now: Date): string {
-  const totalSeconds = Math.max(
-    0,
-    Math.floor((now.getTime() - startedAt.getTime()) / 1000),
-  );
+function formatDuration(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
@@ -81,6 +84,8 @@ export function TimeClockPanel({
       ) : active && openClock ? (
         <ActiveClock
           startedAtIso={openClock.startedAt}
+          pausedAtIso={openClock.pausedAt}
+          pausedMs={openClock.pausedMs}
           title={
             mode === "PAYROLL"
               ? "Lønnstimer"
@@ -197,14 +202,21 @@ function IdleClock({
 
 function ActiveClock({
   startedAtIso,
+  pausedAtIso,
+  pausedMs,
   title,
   commentPlaceholder,
 }: {
   startedAtIso: string;
+  pausedAtIso: string | null;
+  pausedMs: number;
   title: string;
   commentPlaceholder: string;
 }) {
   const startedAt = new Date(startedAtIso);
+  const pausedAt = pausedAtIso ? new Date(pausedAtIso) : null;
+  const isPaused = pausedAt !== null;
+
   const [now, setNow] = useState(() => new Date());
   const [stoppedAt, setStoppedAt] = useState<Date | null>(null);
   const [hours, setHours] = useState(0.5);
@@ -213,7 +225,9 @@ function ActiveClock({
     stopTimeClock,
     undefined,
   );
+  const [pausePending, startPause] = useTransition();
   const [cancelPending, startCancel] = useTransition();
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [cancelMessage, setCancelMessage] = useState<string | null>(null);
   const router = useRouter();
   const saving = stoppedAt !== null;
@@ -226,77 +240,158 @@ function ActiveClock({
 
   useEffect(() => {
     if (stoppedAt) return;
+    // Går også under pause, så pauseklokka teller
     const tick = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(tick);
   }, [stoppedAt]);
 
   const displayAt = stoppedAt ?? now;
-  const digital = formatDigitalElapsed(startedAt, displayAt);
+  const pause = { pausedAt, pausedMs };
+  const digital = formatDuration(workedMs(startedAt, pause, displayAt));
+  const pauseDigital = pausedAt
+    ? formatDuration(displayAt.getTime() - pausedAt.getTime())
+    : null;
+  const totalPauseDigital =
+    pausedMs > 0 || pausedAt
+      ? formatDuration(
+          pausedMs +
+            (pausedAt ? displayAt.getTime() - pausedAt.getTime() : 0),
+        )
+      : null;
 
   function captureStopTime() {
     const end = new Date();
     setStoppedAt(end);
     setNow(end);
-    setHours(Math.max(0.5, hoursFromClock(startedAt, end)));
+    setHours(Math.max(0.5, hoursFromClock(startedAt, end, pause)));
   }
 
-  function resumeClock() {
-    setStoppedAt(null);
-    setNow(new Date());
+  function togglePause() {
+    startPause(async () => {
+      await (isPaused ? resumeTimeClock() : pauseTimeClock());
+      router.refresh();
+    });
   }
+
+  const statusLabel = saving
+    ? `Stoppet · ${title}`
+    : isPaused
+      ? `På pause · ${title}`
+      : `Pågår · ${title}`;
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <p
           className={`flex items-center gap-2 text-eyebrow uppercase ${
-            saving ? "text-white/50" : "text-brand"
+            saving ? "text-white/50" : isPaused ? "text-warn" : "text-brand"
           }`}
         >
-          {!saving ? (
+          {!saving && !isPaused ? (
             <span
               aria-hidden
               className="live-dot size-2 shrink-0 rounded-full bg-brand"
             />
           ) : null}
-          {saving ? `Stoppet · ${title}` : `Pågår · ${title}`}
+          {isPaused && !saving ? (
+            <span aria-hidden className="size-2 shrink-0 rounded-full bg-warn" />
+          ) : null}
+          {statusLabel}
         </p>
         <p
-          className={`${clockFaceClass} text-white`}
+          className={`${clockFaceClass} ${isPaused && !saving ? "text-white/45" : "text-white"}`}
           aria-live="off"
-          aria-label={saving ? `Stoppet på ${digital}` : `Pågår, ${digital}`}
+          aria-label={
+            saving
+              ? `Stoppet på ${digital}`
+              : isPaused
+                ? `På pause, ${digital} arbeidet`
+                : `Pågår, ${digital}`
+          }
         >
           {digital}
         </p>
+        {totalPauseDigital ? (
+          <p className="text-meta text-white/50">
+            {isPaused && !saving
+              ? `Pause nå: ${pauseDigital} · totalt ${totalPauseDigital}`
+              : `Pause trukket fra: ${totalPauseDigital}`}
+          </p>
+        ) : null}
       </div>
 
       {saving ? (
         <button
           type="button"
           disabled={pending}
-          aria-label="Fortsett stempling"
-          onClick={resumeClock}
+          aria-label="Tilbake til stemplingen"
+          onClick={() => {
+            setStoppedAt(null);
+            setNow(new Date());
+          }}
           className={`${fullActionClass} border-[1.5px] border-white/30 text-white active:bg-white/10`}
         >
-          Fortsett
+          Tilbake
         </button>
       ) : (
-        <button
-          type="button"
-          aria-label="Stopp stempling"
-          onClick={captureStopTime}
-          className={`${fullActionClass} ${stopActionClass}`}
-        >
-          <svg
-            aria-hidden
-            viewBox="0 0 24 24"
-            className="size-4.5"
-            fill="currentColor"
+        <div className="flex gap-2.5">
+          <button
+            type="button"
+            disabled={pausePending}
+            aria-label={isPaused ? "Fortsett stempling" : "Pause stempling"}
+            onClick={togglePause}
+            className={`${fullActionClass} flex-1 ${
+              isPaused
+                ? startActionClass
+                : "border-[1.5px] border-white/30 text-white active:bg-white/10"
+            }`}
           >
-            <rect x="6" y="6" width="12" height="12" rx="2.5" />
-          </svg>
-          Stopp
-        </button>
+            {pausePending ? (
+              "…"
+            ) : isPaused ? (
+              <>
+                <svg
+                  aria-hidden
+                  viewBox="0 0 24 24"
+                  className="size-4.5"
+                  fill="currentColor"
+                >
+                  <path d="M8 5.6a1 1 0 0 1 1.52-.85l9 6.4a1 1 0 0 1 0 1.7l-9 6.4A1 1 0 0 1 8 18.4Z" />
+                </svg>
+                Fortsett
+              </>
+            ) : (
+              <>
+                <svg
+                  aria-hidden
+                  viewBox="0 0 24 24"
+                  className="size-4.5"
+                  fill="currentColor"
+                >
+                  <rect x="6.5" y="5.5" width="3.6" height="13" rx="1.3" />
+                  <rect x="13.9" y="5.5" width="3.6" height="13" rx="1.3" />
+                </svg>
+                Pause
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            aria-label="Stopp stempling"
+            onClick={captureStopTime}
+            className={`${fullActionClass} flex-1 ${stopActionClass}`}
+          >
+            <svg
+              aria-hidden
+              viewBox="0 0 24 24"
+              className="size-4.5"
+              fill="currentColor"
+            >
+              <rect x="6" y="6" width="12" height="12" rx="2.5" />
+            </svg>
+            Stopp
+          </button>
+        </div>
       )}
 
       {saving && (
@@ -330,26 +425,52 @@ function ActiveClock({
         </form>
       )}
 
-      <button
-        type="button"
-        disabled={cancelPending || pending}
-        onClick={() => {
-          if (!window.confirm("Avbryte stempling uten å lagre timer?")) {
-            return;
-          }
-          setCancelMessage(null);
-          startCancel(async () => {
-            const result = await cancelTimeClock();
-            if (result?.message && !result.message.includes("avbrutt")) {
-              setCancelMessage(result.message);
-            }
-            router.refresh();
-          });
-        }}
-        className="min-h-11 self-start text-meta font-semibold text-white/45 underline-offset-4 hover:underline"
-      >
-        {cancelPending ? "Avbryter …" : "Avbryt"}
-      </button>
+      {/* Bekreftelse inne i appen. window.confirm er upålitelig i WebView-en
+          appen kjører i, og gir små trykkflater med hansker. */}
+      {confirmingCancel ? (
+        <div className="rounded-2xl border border-white/20 bg-white/10 p-3.5">
+          <p className="text-body text-white">
+            Slette stemplingen uten å lagre timer?
+          </p>
+          <div className="mt-3 flex gap-2.5">
+            <button
+              type="button"
+              disabled={cancelPending}
+              onClick={() => {
+                setCancelMessage(null);
+                startCancel(async () => {
+                  const result = await cancelTimeClock();
+                  if (result?.message && !result.message.includes("avbrutt")) {
+                    setCancelMessage(result.message);
+                  }
+                  setConfirmingCancel(false);
+                  router.refresh();
+                });
+              }}
+              className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-danger text-body font-bold text-white transition-colors active:opacity-85 disabled:opacity-50"
+            >
+              {cancelPending ? "Avbryter …" : "Ja, slett"}
+            </button>
+            <button
+              type="button"
+              disabled={cancelPending}
+              onClick={() => setConfirmingCancel(false)}
+              className="flex min-h-12 flex-1 items-center justify-center rounded-xl border-[1.5px] border-white/30 text-body font-bold text-white transition-colors active:bg-white/10"
+            >
+              Behold
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={cancelPending || pending}
+          onClick={() => setConfirmingCancel(true)}
+          className="min-h-11 self-start text-meta font-semibold text-white/45 underline-offset-4 hover:underline"
+        >
+          Avbryt stempling
+        </button>
+      )}
       {cancelMessage && (
         <p role="status" className="text-body font-medium text-white/80">
           {cancelMessage}

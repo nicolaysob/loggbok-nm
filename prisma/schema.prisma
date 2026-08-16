@@ -289,6 +289,11 @@ model TimeClock {
   // Kun EXTRA_WORK — hvilken kunde stemplingen gjelder
   customerId String?
   startedAt  DateTime      @default(now())
+  // Pause — kunden skal ikke betale for pausetid.
+  // pausedAt er satt mens pausen løper, pausedMs er summen av avsluttede
+  // pauser. Fakturerbar tid = nå − startedAt − pausedMs − løpende pause.
+  pausedAt   DateTime?
+  pausedMs   Int           @default(0)
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)

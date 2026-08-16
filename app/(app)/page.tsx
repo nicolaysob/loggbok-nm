@@ -147,6 +147,8 @@ export default async function HomePage() {
             <HomeClockBanner
               href={clockHref}
               startedAt={openClockRow.startedAt.toISOString()}
+              pausedAt={openClockRow.pausedAt?.toISOString() ?? null}
+              pausedMs={openClockRow.pausedMs}
               label={
                 openClockRow.kind === "PAYROLL"
                   ? "Stempling"
