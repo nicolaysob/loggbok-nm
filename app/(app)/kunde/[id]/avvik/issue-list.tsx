@@ -8,6 +8,7 @@ import { outlineActionClass, solidActionClass } from "@/lib/ui";
 import { AdminDeleteButton } from "@/components/admin-delete-button";
 import { EditableText } from "@/components/editable-text";
 import { PhotoThumbs } from "@/components/photo-thumbs";
+import { IssueNotes, type IssueNoteItem } from "./issue-notes";
 
 export type IssueItem = {
   id: string;
@@ -17,6 +18,7 @@ export type IssueItem = {
   reportedBy: string;
   userId: string;
   photoUrls: string[];
+  notes: IssueNoteItem[];
 };
 
 // Åpent avvik er rødt. Under arbeid og lukket dempes ned til marineblått,
@@ -81,6 +83,12 @@ export function IssueList({
             />
 
             <PhotoThumbs urls={issue.photoUrls} />
+
+            <IssueNotes
+              issueId={issue.id}
+              notes={issue.notes}
+              isAdmin={isAdmin}
+            />
 
             <div className="flex flex-wrap gap-2">
               {allStatuses

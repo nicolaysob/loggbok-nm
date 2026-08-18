@@ -233,15 +233,33 @@ model Issue {
   description String
   status      IssueStatus @default(OPEN)
 
-  area   Area    @relation(fields: [areaId], references: [id], onDelete: Cascade)
-  user   User    @relation(fields: [userId], references: [id])
+  area   Area        @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id])
   photos Photo[]
+  notes  IssueNote[]
 
   createdAt DateTime  @default(now())
   closedAt  DateTime?
   updatedAt DateTime  @updatedAt
 
   @@index([areaId, status])
+  @@index([userId])
+}
+
+// Oppdatering på et avvik — hva som er gjort siden sist, med tidspunkt.
+// Intern: vises ikke i kundeportalen.
+model IssueNote {
+  id      String @id @default(cuid())
+  issueId String
+  userId  String
+  body    String
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([issueId, createdAt])
   @@index([userId])
 }
 
@@ -266,6 +284,7 @@ model User {
   customer       Customer?         @relation(fields: [customerId], references: [id], onDelete: Restrict)
   logEntries     LogEntry[]
   issues         Issue[]
+  issueNotes     IssueNote[]
   jobCompletions JobCompletion[]
   timeEntries    TimeEntry[]
   timeClocks     TimeClock[]
