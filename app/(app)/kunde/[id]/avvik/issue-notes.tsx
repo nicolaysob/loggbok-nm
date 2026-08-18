@@ -30,13 +30,15 @@ export function IssueNotes({
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Tøm feltet når oppdateringen er lagret, så neste ikke starter halvskrevet
+  // Tøm feltet når oppdateringen er lagret, så neste ikke starter halvskrevet.
+  // Følger hele state-objektet, ikke teksten: to like meldinger på rad ville
+  // ellers sett uendret ut, og skjemaet ble stående åpent.
   useEffect(() => {
     if (state?.message?.includes("lagret")) {
       formRef.current?.reset();
       setOpen(false);
     }
-  }, [state?.message]);
+  }, [state]);
 
   return (
     <div className="flex flex-col gap-3 border-t border-hair pt-3">
@@ -60,7 +62,8 @@ export function IssueNotes({
                 <AdminDeleteButton
                   target="issueNote"
                   id={note.id}
-                  confirmText="Slette denne oppdateringen?"
+                  confirmText="Slette denne?"
+                  className="min-h-9 shrink-0 rounded-lg px-2 text-micro font-semibold text-ink-3 transition-colors active:bg-danger-soft active:text-danger disabled:opacity-50"
                 />
               ) : null}
             </li>
