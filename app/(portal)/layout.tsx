@@ -1,6 +1,7 @@
 import { requireCustomer } from "@/lib/dal";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { ProfileCorner } from "@/components/profile-menu";
+import { OneSignalInit } from "@/components/onesignal-init";
 
 export default async function PortalLayout({
   children,
@@ -28,6 +29,7 @@ export default async function PortalLayout({
         </div>
         <PullToRefresh>{children}</PullToRefresh>
       </main>
+      <OneSignalInit externalUserId={user.id} audience="customer" />
     </div>
   );
 }

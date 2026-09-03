@@ -122,6 +122,7 @@ model CustomerMessage {
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   user     User     @relation("CustomerMessageSender", fields: [userId], references: [id], onDelete: Cascade)
   signedBy User?    @relation("CustomerMessageSigner", fields: [signedByUserId], references: [id], onDelete: SetNull)
+  replies  CustomerMessageReply[]
 
   createdAt DateTime @default(now())
 
@@ -129,6 +130,22 @@ model CustomerMessage {
   @@index([customerId, readAt])
   @@index([userId])
   @@index([signedByUserId])
+}
+
+// Svar fra N&M på en kundemelding — kunden ser det i portalen
+model CustomerMessageReply {
+  id        String @id @default(cuid())
+  messageId String
+  userId    String
+  body      String
+
+  message CustomerMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+
+  @@index([messageId, createdAt])
+  @@index([userId])
 }
 
 // Område — en kunde kan ha flere
@@ -290,6 +307,7 @@ model User {
   timeClocks     TimeClock[]
   messages       CustomerMessage[] @relation("CustomerMessageSender")
   signedMessages CustomerMessage[] @relation("CustomerMessageSigner")
+  messageReplies CustomerMessageReply[]
   todosCreated   Todo[]            @relation("TodoCreator")
   todosCompleted Todo[]            @relation("TodoCompleter")
 

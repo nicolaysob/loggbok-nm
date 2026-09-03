@@ -21,6 +21,7 @@ import { BrandIcon } from "@/components/brand";
 import { PortalIssueList } from "@/components/portal-issue-list";
 import { ProfileMenu } from "@/components/profile-menu";
 import { PortalMessageForm } from "./message-form";
+import { MessageReplyList } from "@/components/message-reply-list";
 
 const MONTH_SHORT = [
   "jan",
@@ -133,6 +134,15 @@ export default async function CustomerPortalPage() {
           id: true,
           body: true,
           createdAt: true,
+          replies: {
+            orderBy: { createdAt: "asc" },
+            select: {
+              id: true,
+              body: true,
+              createdAt: true,
+              user: { select: { name: true } },
+            },
+          },
         },
       }),
     getCustomerActivity(customer.id, {
@@ -375,11 +385,21 @@ export default async function CustomerPortalPage() {
                 className={`flex flex-col gap-1.5 px-4 py-3.5 ${cardStaticClass}`}
               >
                 <span className="text-micro text-ink-3">
-                  Sendt {formatDate(message.createdAt)} · ikke lest ennå
+                  {message.replies.length > 0
+                    ? `Sendt ${formatDate(message.createdAt)} · svar fra N&M`
+                    : `Sendt ${formatDate(message.createdAt)} · ikke lest ennå`}
                 </span>
                 <p className="text-body whitespace-pre-wrap text-ink">
                   {message.body}
                 </p>
+                <MessageReplyList
+                  replies={message.replies.map((reply) => ({
+                    id: reply.id,
+                    body: reply.body,
+                    at: `${formatDate(reply.createdAt)} · ${formatTime(reply.createdAt)}`,
+                    author: reply.user.name,
+                  }))}
+                />
               </li>
             ))}
           </ul>
