@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
-import { requireCustomer } from "@/lib/dal";
+import { redirect } from "next/navigation";
+import { portalScope } from "@/lib/portal-scope";
 import { listCustomerMessageMonths } from "@/lib/customer-activity";
 import { calendarMonth, parseYearMonth } from "@/lib/period";
 import { formatDate, formatTime } from "@/lib/time";
@@ -11,8 +12,12 @@ import { MessageReplyList } from "@/components/message-reply-list";
 export default async function PortalMessageArchivePage({
   searchParams,
 }: PageProps<"/portal/meldinger">) {
-  const user = await requireCustomer();
-  const { maaned } = await searchParams;
+  const { maaned, sted } = await searchParams;
+  const scope = await portalScope(sted);
+  // Avvik og meldinger hører til ett sted — eieren velger sted først
+  if (scope.kind === "owner") redirect("/portal");
+  const user = { customerId: scope.customerId };
+  const stedQuery = scope.owner ? `&sted=${scope.customerId}` : "";
   const parsed = parseYearMonth(
     typeof maaned === "string" ? maaned : undefined,
   );
@@ -115,7 +120,7 @@ export default async function PortalMessageArchivePage({
 
       <MonthFolderList
         folders={folders}
-        hrefFor={(param) => `/portal/meldinger?maaned=${param}`}
+        hrefFor={(param) => `/portal/meldinger?maaned=${param}${stedQuery}`}
         emptyText="Ingen tidligere meldinger ennå."
         countLabel={(count) =>
           count === 1 ? "1 melding" : `${count} meldinger`
